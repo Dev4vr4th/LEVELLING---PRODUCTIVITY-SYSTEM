@@ -1,0 +1,2601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>THE SYSTEM</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#5b8cff">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="THE SYSTEM">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --void:#070a12;
+  --void-2:#0a0e17;
+  --panel:#0e1526;
+  --panel-2:#121b32;
+  --line:#1c2842;
+  --line-bright:#2a3c63;
+  --ink:#c7d3ee;
+  --ink-dim:#6b7a9e;
+  --ink-faint:#3f4d6e;
+  --blue:#5b8cff;
+  --blue-glow:#5b8cff66;
+  --violet:#a78bfa;
+  --gold:#e8b93f;
+  --danger:#ff3b5c;
+  --danger-glow:#ff3b5c55;
+  --good:#3ddc97;
+
+  --rank-E:#6b7a9e;
+  --rank-D:#c98a4b;
+  --rank-C:#5b8cff;
+  --rank-B:#a78bfa;
+  --rank-A:#ff5b8c;
+  --rank-S:#f4d35e;
+
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --sans: 'Inter', system-ui, sans-serif;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  background: radial-gradient(ellipse 1200px 800px at 50% -10%, #0d1730 0%, var(--void) 55%), var(--void);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+
+#app{ max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; position:relative; }
+
+.bg-grid{
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    linear-gradient(rgba(91,140,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91,140,255,0.035) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(ellipse 600px 500px at 50% 0%, black 0%, transparent 70%);
+}
+
+/* ---------- System Window (signature component) ---------- */
+.sys-panel{
+  position:relative;
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border: 1px solid var(--line);
+  padding: 18px;
+  margin: 0 16px 14px;
+}
+.sys-panel::before, .sys-panel::after,
+.sys-panel .tick-br, .sys-panel .tick-bl{
+  content:''; position:absolute; width:10px; height:10px;
+  border-color: var(--blue); opacity:.9;
+}
+.sys-panel::before{ top:-1px; left:-1px; border-top:2px solid var(--blue); border-left:2px solid var(--blue);}
+.sys-panel::after{ top:-1px; right:-1px; border-top:2px solid var(--blue); border-right:2px solid var(--blue);}
+.sys-panel .tick-bl{ bottom:-1px; left:-1px; border-bottom:2px solid var(--blue); border-left:2px solid var(--blue);}
+.sys-panel .tick-br{ bottom:-1px; right:-1px; border-bottom:2px solid var(--blue); border-right:2px solid var(--blue);}
+
+.sys-label{
+  font-family: var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+  color: var(--blue); opacity:.85; display:flex; align-items:center; gap:8px; margin-bottom:10px;
+}
+.sys-label::before{ content:'◆'; font-size:8px; }
+
+/* ---------- top status bar ---------- */
+.statusbar{ padding: 18px 16px 8px; position:relative; z-index:1; }
+.sb-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+.sb-title{ font-family:var(--mono); font-size:13px; letter-spacing:.25em; color:var(--ink-dim); }
+.sb-title b{ color:var(--ink); }
+.sb-gold{ font-family:var(--mono); font-size:13px; color:var(--gold); display:flex; align-items:center; gap:6px;}
+
+.rankplate{
+  display:flex; align-items:center; gap:14px;
+  padding:14px; border:1px solid var(--line-bright);
+  background: linear-gradient(135deg, rgba(91,140,255,.08), transparent 60%);
+  position:relative; overflow:hidden;
+}
+.rankplate::after{
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(120deg, transparent 30%, rgba(91,140,255,.10) 50%, transparent 70%);
+  background-size:200% 100%;
+  animation: sheen 5s linear infinite;
+  pointer-events:none;
+}
+@keyframes sheen{ 0%{background-position:200% 0;} 100%{background-position:-50% 0;} }
+
+.rank-badge{
+  width:58px; height:58px; flex-shrink:0;
+  border:2px solid var(--rk, var(--rank-E));
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-weight:800; font-size:26px; color:var(--rk, var(--rank-E));
+  box-shadow: 0 0 18px -2px var(--rk, var(--rank-E));
+  position:relative; clip-path: polygon(15% 0,85% 0,100% 15%,100% 85%,85% 100%,15% 100%,0 85%,0 15%);
+  background: rgba(0,0,0,.4);
+}
+.rank-info{ flex:1; min-width:0; }
+.rank-name{ font-family:var(--mono); font-weight:700; font-size:15px; color:var(--ink); letter-spacing:.02em;}
+.rank-title{ font-size:12px; color: var(--ink-dim); margin-top:2px;}
+.lvl-row{ display:flex; align-items:center; gap:8px; margin-top:8px; font-family:var(--mono); font-size:11px; color:var(--ink-dim);}
+.xpbar{ flex:1; height:6px; background:var(--void-2); border:1px solid var(--line); position:relative; overflow:hidden;}
+.xpbar i{ position:absolute; inset:0; width:var(--pct,0%); background:linear-gradient(90deg,var(--blue),var(--violet)); box-shadow:0 0 8px var(--blue-glow);}
+
+.gear-bonus-strip{ display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+.gear-chip{ font-family:var(--mono); font-size:9.5px; padding:3px 7px; border:1px solid var(--line-bright); color:var(--good); background:rgba(61,220,151,.08); white-space:nowrap;}
+
+/* ---------- tabs ---------- */
+.tabbar{
+  display:flex; border-top:1px solid var(--line); background:var(--void-2);
+  position:sticky; bottom:0; z-index:5; padding-bottom: env(safe-area-inset-bottom);
+}
+.tab{
+  flex:1; padding:11px 4px 9px; text-align:center; cursor:pointer;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; color:var(--ink-faint);
+  border-top:2px solid transparent; transition:.15s; text-transform:uppercase;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+}
+.tab svg{ width:18px; height:18px; stroke:var(--ink-faint); transition:.15s; }
+.tab.active{ color:var(--blue); border-top-color:var(--blue); }
+.tab.active svg{ stroke:var(--blue); filter:drop-shadow(0 0 4px var(--blue-glow)); }
+
+.view{ display:none; flex:1; padding-bottom:18px; position:relative; z-index:1;}
+.view.active{ display:block; animation: fadein .25s ease; }
+@keyframes fadein{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+/* ---------- quest card ---------- */
+.quest-card{ margin:0 16px 12px; padding:16px; border:1px solid var(--line); background:var(--panel); }
+.quest-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
+.quest-head h3{ font-family:var(--mono); font-size:14px; color:var(--ink); letter-spacing:.02em;}
+.quest-timer{ font-family:var(--mono); font-size:11px; color:var(--danger); }
+.quest-subnote{ font-size:11px; color:var(--ink-dim); margin-bottom:12px; }
+
+.quest-item{ display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); }
+.quest-item:last-child{ border-bottom:none; }
+.q-check{
+  width:22px; height:22px; border:1.5px solid var(--ink-faint); flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.15s;
+  clip-path: polygon(20% 0,80% 0,100% 20%,100% 80%,80% 100%,20% 100%,0 80%,0 20%);
+}
+.q-check.done{ background:var(--good); border-color:var(--good); box-shadow:0 0 10px #3ddc9755;}
+.q-check svg{ width:13px; height:13px; stroke:var(--void); display:none;}
+.q-check.done svg{ display:block; }
+.q-name{ flex:1; font-size:13.5px; color:var(--ink); }
+.q-name.done{ color:var(--ink-faint); text-decoration:line-through; }
+.q-target{ font-family:var(--mono); font-size:11px; color:var(--ink-dim); }
+.q-reward{ font-family:var(--mono); font-size:10px; color:var(--gold); white-space:nowrap;}
+
+.quest-progress-row{ display:flex; align-items:center; gap:10px; margin-top:12px; }
+.quest-progress-row .xpbar{ height:5px; }
+.quest-cta{
+  display:block; width:100%; margin-top:14px; padding:13px; text-align:center;
+  background: linear-gradient(135deg, var(--blue), #4169e1); color:#fff;
+  font-family:var(--mono); font-weight:700; font-size:13px; letter-spacing:.08em;
+  border:none; cursor:pointer; text-transform:uppercase;
+  box-shadow:0 4px 20px -4px var(--blue-glow);
+}
+.quest-cta:disabled{ background:var(--line); color:var(--ink-faint); box-shadow:none; cursor:default;}
+
+.rest-banner{
+  margin:0 16px 12px; padding:14px 16px; border:1px solid var(--good); background:rgba(61,220,151,.07);
+  font-size:12.5px; color:var(--ink); line-height:1.5;
+}
+.rest-banner b{ color:var(--good); }
+
+/* ---------- stat blocks ---------- */
+.stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 12px; }
+.stat-box{ border:1px solid var(--line); background:var(--panel); padding:12px; position:relative;}
+.stat-box .sn{ font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:var(--ink-dim); text-transform:uppercase;}
+.stat-box .sv{ font-family:var(--mono); font-size:24px; font-weight:700; color:var(--ink); margin-top:4px;}
+.stat-box .sv span{ font-size:12px; color:var(--good); font-weight:600;}
+.stat-bar{ height:4px; background:var(--void-2); margin-top:8px; overflow:hidden;}
+.stat-bar i{ display:block; height:100%; background:var(--blue);}
+
+.section-title{
+  font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--ink-dim); margin:18px 16px 10px; display:flex; align-items:center; justify-content:space-between;
+}
+.section-title span.t::before{ content:''; width:3px; height:11px; background:var(--blue); display:inline-block; margin-right:8px;}
+.section-title a{ font-family:var(--mono); font-size:10px; color:var(--blue); text-decoration:none; letter-spacing:.05em; cursor:pointer; }
+
+/* ---------- buttons / misc ---------- */
+.btn{
+  font-family:var(--mono); font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+  padding:10px 14px; border:1px solid var(--line-bright); background:var(--panel-2); color:var(--ink);
+  cursor:pointer; transition:.15s;
+}
+.btn:hover{ border-color:var(--blue); color:var(--blue); }
+.btn.primary{ background:var(--blue); color:#fff; border-color:var(--blue);}
+.btn.full{ width:100%; }
+.row{ display:flex; gap:10px; }
+.pill{ font-family:var(--mono); font-size:10px; padding:4px 9px; border:1px solid var(--line-bright); color:var(--ink-dim); text-transform:uppercase; letter-spacing:.05em;}
+
+/* ---------- splash screen (home-screen launch only) ---------- */
+#splash-screen{
+  position:fixed; inset:0; z-index:9999; background:var(--void);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  max-width:480px; margin:0 auto; text-align:center; padding:40px 30px;
+  transition:opacity .5s ease;
+}
+#splash-screen.fade-out{ opacity:0; pointer-events:none; }
+.splash-badge{
+  width:88px; height:88px; border:2px solid var(--blue); margin-bottom:24px;
+  clip-path: polygon(15% 0,85% 0,100% 15%,100% 85%,85% 100%,15% 100%,0 85%,0 15%);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 30px -4px var(--blue-glow);
+  animation: splashPulse 2s ease-in-out infinite;
+}
+.splash-badge svg{ width:42px; height:42px; }
+@keyframes splashPulse{ 0%,100%{box-shadow:0 0 30px -4px var(--blue-glow);} 50%{box-shadow:0 0 44px -2px var(--blue-glow);} }
+.splash-title{ font-family:var(--mono); font-size:13px; letter-spacing:.3em; color:var(--ink-dim); text-transform:uppercase; margin-bottom:36px;}
+.splash-quote{
+  font-family:var(--mono); font-size:14px; color:var(--ink); line-height:1.7; min-height:64px;
+  display:flex; align-items:center; justify-content:center; max-width:320px;
+  transition:opacity .4s ease;
+}
+.splash-quote.fade{ opacity:0; }
+.splash-loadbar{ width:160px; height:3px; background:var(--line); margin-top:30px; overflow:hidden; position:relative;}
+.splash-loadbar i{ position:absolute; inset:0; width:0%; background:linear-gradient(90deg,var(--blue),var(--violet)); box-shadow:0 0 8px var(--blue-glow); transition:width linear;}
+.splash-credit{ position:absolute; bottom:28px; left:0; right:0; text-align:center; font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); letter-spacing:.05em;}
+
+/* ---------- footer credit label (shown inside the app) ---------- */
+.app-credit{
+  text-align:center; padding:18px 0 28px; font-family:var(--mono); font-size:10px;
+  color:var(--ink-faint); letter-spacing:.04em; opacity:0.55;
+}
+
+/* ---------- onboarding ---------- */
+#onboarding{ position:fixed; inset:0; background:var(--void); z-index:100; display:flex; flex-direction:column; max-width:480px; margin:0 auto; overflow-y:auto;}
+.ob-progress{ display:flex; gap:5px; padding:20px 20px 0; }
+.ob-progress i{ flex:1; height:3px; background:var(--line); }
+.ob-progress i.done{ background:var(--blue); }
+.ob-step{ flex:1; padding:24px 22px; display:none; flex-direction:column; }
+.ob-step.active{ display:flex; animation:fadein .3s ease; }
+.ob-step h1{ font-family:var(--mono); font-size:20px; color:var(--ink); margin-bottom:6px; letter-spacing:.02em;}
+.ob-step p.sub{ color:var(--ink-dim); font-size:13px; margin-bottom:22px; line-height:1.5;}
+.field{ margin-bottom:16px; }
+.field label{ display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:7px;}
+.field input, .field select, .field textarea{
+  width:100%; background:var(--panel); border:1px solid var(--line-bright); color:var(--ink);
+  padding:12px; font-family:var(--sans); font-size:14px; outline:none;
+}
+.field input:focus, .field select:focus{ border-color:var(--blue); }
+.choice-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.choice{
+  border:1px solid var(--line-bright); padding:13px 10px; text-align:center; cursor:pointer;
+  font-size:13px; color:var(--ink-dim); transition:.15s;
+}
+.choice.sel{ border-color:var(--blue); color:var(--blue); background:rgba(91,140,255,.08); box-shadow:0 0 12px -4px var(--blue-glow);}
+.ob-nav{ padding:16px 22px; display:flex; gap:10px; padding-bottom:calc(16px + env(safe-area-inset-bottom));}
+
+/* ---------- awakening ---------- */
+#awaken{
+  position:fixed; inset:0; background:#000; z-index:200; display:flex; align-items:center; justify-content:center;
+  flex-direction:column; text-align:center; padding:30px;
+}
+#awaken .glow-text{ font-family:var(--mono); color:var(--blue); font-size:13px; letter-spacing:.3em; text-transform:uppercase; opacity:0; animation: typein 1.2s forwards;}
+#awaken h1{ font-family:var(--mono); font-size:30px; color:#fff; margin:18px 0; opacity:0; animation: typein 1.2s 0.6s forwards; text-shadow:0 0 30px var(--blue-glow);}
+#awaken p{ color:var(--ink-dim); font-size:13px; opacity:0; animation: typein 1.2s 1.2s forwards;}
+@keyframes typein{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+#awaken button{ margin-top:30px; opacity:0; animation: typein 1.2s 1.8s forwards;}
+
+/* ---------- toast ---------- */
+#toast-layer{ position:fixed; top:0; left:0; right:0; z-index:300; display:flex; flex-direction:column; align-items:center; pointer-events:none; max-width:480px; margin:0 auto;}
+.toast{
+  margin-top:14px; padding:13px 20px; background:rgba(10,14,23,.95); border:1px solid var(--blue);
+  font-family:var(--mono); font-size:12.5px; color:var(--ink); box-shadow:0 0 24px -4px var(--blue-glow);
+  animation: toastin .25s ease, toastout .3s ease 2.6s forwards;
+  text-align:center; min-width:240px;
+}
+.toast.danger{ border-color:var(--danger); box-shadow:0 0 24px -4px var(--danger-glow); }
+.toast.gold{ border-color:var(--gold); box-shadow:0 0 24px -4px #e8b93f55; }
+.toast b{ color:var(--blue); }
+.toast.danger b{ color:var(--danger); }
+.toast.gold b{ color:var(--gold); }
+@keyframes toastin{ from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);} }
+@keyframes toastout{ to{opacity:0; transform:translateY(-10px);} }
+
+/* ---------- rank up / rank down modal ---------- */
+.modal-bg{ position:fixed; inset:0; background:rgba(4,6,12,.88); z-index:250; display:flex; align-items:center; justify-content:center; padding:24px;}
+.rankup-card{
+  background:var(--panel); border:1px solid var(--rk,var(--blue)); padding:34px 26px; text-align:center; max-width:340px;
+  box-shadow:0 0 50px -6px var(--rk,var(--blue-glow)); position:relative;
+}
+.rankup-card .tick-br,.rankup-card::before,.rankup-card::after,.rankup-card .tick-bl{ content:''; position:absolute; width:14px; height:14px; border-color:var(--rk,var(--blue));}
+.rankup-card::before{ top:-1px; left:-1px; border-top:2px solid var(--rk,var(--blue)); border-left:2px solid var(--rk,var(--blue));}
+.rankup-card::after{ top:-1px; right:-1px; border-top:2px solid var(--rk,var(--blue)); border-right:2px solid var(--rk,var(--blue));}
+.rankup-card .tick-bl{ bottom:-1px; left:-1px; border-bottom:2px solid var(--rk,var(--blue)); border-left:2px solid var(--rk,var(--blue));}
+.rankup-card .tick-br{ bottom:-1px; right:-1px; border-bottom:2px solid var(--rk,var(--blue)); border-right:2px solid var(--rk,var(--blue));}
+.rankup-eyebrow{ font-family:var(--mono); font-size:11px; letter-spacing:.3em; color:var(--ink-dim); text-transform:uppercase;}
+.rankup-rank{ font-family:var(--mono); font-size:56px; font-weight:800; color:var(--rk,var(--blue)); margin:10px 0; text-shadow:0 0 30px var(--rk,var(--blue-glow));}
+.rankup-name{ font-size:14px; color:var(--ink); margin-bottom:18px;}
+.rankup-card.down{ border-color:var(--danger); box-shadow:0 0 50px -6px var(--danger-glow); }
+.rankup-card.down .rankup-rank{ color:var(--danger); text-shadow:0 0 30px var(--danger-glow);}
+.rankup-card.down::before,.rankup-card.down::after,.rankup-card.down .tick-bl,.rankup-card.down .tick-br{ border-color:var(--danger) !important; }
+
+/* ---------- store ---------- */
+.store-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px;}
+.item-card{ border:1px solid var(--line); background:var(--panel); padding:12px; text-align:center;}
+.item-card .icon{ font-size:30px; margin-bottom:8px; filter:drop-shadow(0 0 8px var(--blue-glow));}
+.item-card .iname{ font-size:12px; color:var(--ink); margin-bottom:2px;}
+.item-card .irank{ font-family:var(--mono); font-size:9px; color:var(--ink-dim); text-transform:uppercase; margin-bottom:6px;}
+.item-card .ibonus{ font-family:var(--mono); font-size:9.5px; color:var(--good); margin-bottom:8px; min-height:13px;}
+.item-card .price{ font-family:var(--mono); font-size:12px; color:var(--gold); margin-bottom:8px;}
+.item-card button{ width:100%; padding:7px; font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; border:1px solid var(--line-bright); background:transparent; color:var(--ink-dim); cursor:pointer;}
+.item-card.owned button{ color:var(--good); border-color:var(--good);}
+.item-card button:not(:disabled):hover{ border-color:var(--blue); color:var(--blue);}
+.item-card.equipped{ border-color:var(--blue); box-shadow:0 0 14px -6px var(--blue-glow);}
+.item-card.equipped button{ color:var(--blue); border-color:var(--blue);}
+.store-tabs{ display:flex; gap:8px; margin:0 16px 14px; }
+.store-tab{ font-family:var(--mono); font-size:10.5px; padding:6px 12px; border:1px solid var(--line-bright); color:var(--ink-dim); cursor:pointer; text-transform:uppercase;}
+.store-tab.active{ border-color:var(--blue); color:var(--blue); }
+
+/* ---------- analytics ---------- */
+.chart-box{ margin:0 16px 14px; border:1px solid var(--line); background:var(--panel); padding:14px;}
+.chart-box svg{ width:100%; display:block; }
+.streak-row{ display:flex; gap:6px; margin:0 16px 14px; }
+.streak-day{ flex:1; aspect-ratio:1; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:9px; color:var(--ink-faint);}
+.streak-day.hit{ background:var(--blue); border-color:var(--blue); color:#fff;}
+.streak-day.fail{ background:rgba(255,59,92,.15); border-color:var(--danger); color:var(--danger);}
+.streak-day.rest{ background:rgba(61,220,151,.1); border-color:var(--good); color:var(--good);}
+
+.lift-row{ display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line);}
+.lift-row:last-child{ border-bottom:none;}
+.lift-name{ flex:1; font-size:13px; color:var(--ink);}
+.lift-pct{ font-family:var(--mono); font-size:11px; color:var(--blue); min-width:62px; text-align:right;}
+.lift-input{ width:60px; background:var(--void-2); border:1px solid var(--line-bright); color:var(--ink); padding:6px; font-family:var(--mono); font-size:12px; text-align:center;}
+
+/* ---------- penalty zone ---------- */
+#penalty-zone{
+  position:fixed; inset:0; background:#0d0405; z-index:400; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:30px; text-align:center;
+}
+#penalty-zone::before{ content:''; position:absolute; inset:0; border:3px solid var(--danger); box-shadow: inset 0 0 80px -10px var(--danger-glow); pointer-events:none; animation:pulse 2s infinite;}
+@keyframes pulse{ 0%,100%{opacity:.6;} 50%{opacity:1;} }
+#penalty-zone h1{ font-family:var(--mono); color:var(--danger); font-size:22px; letter-spacing:.1em; margin-bottom:10px; text-shadow:0 0 20px var(--danger-glow);}
+#penalty-zone p{ color:var(--ink-dim); font-size:13px; margin-bottom:24px; max-width:300px; line-height:1.6;}
+#penalty-zone .loss-list{ font-family:var(--mono); font-size:12px; color:var(--danger); margin-bottom:24px; text-align:left; background:rgba(255,59,92,.07); border:1px solid var(--danger); padding:14px 18px; width:100%; max-width:300px;}
+#penalty-zone .loss-list div{ padding:3px 0; }
+
+.profile-row{ display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--line); font-size:13px;}
+.profile-row:last-child{border-bottom:none;}
+.profile-row span:first-child{ color:var(--ink-dim);}
+.profile-row span:last-child{ font-family:var(--mono); color:var(--ink);}
+
+.empty-note{ text-align:center; color:var(--ink-faint); font-size:12px; padding:20px; font-family:var(--mono);}
+
+/* ---------- achievements ---------- */
+.ach-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 14px;}
+.ach-card{ border:1px solid var(--line); background:var(--panel); padding:12px; text-align:center; opacity:.4; filter:grayscale(1); transition:.2s;}
+.ach-card.unlocked{ opacity:1; filter:none; border-color:var(--gold); box-shadow:0 0 14px -6px #e8b93f55;}
+.ach-card .aicon{ font-size:26px; margin-bottom:6px;}
+.ach-card .aname{ font-size:11.5px; color:var(--ink); margin-bottom:3px; font-weight:600;}
+.ach-card .adesc{ font-size:10px; color:var(--ink-dim); line-height:1.4;}
+.ach-progress-note{ margin:0 16px 14px; font-family:var(--mono); font-size:11px; color:var(--ink-dim); text-align:center;}
+
+/* ---------- custom workout builder ---------- */
+.exercise-row{ display:flex; gap:8px; align-items:center; margin-bottom:8px;}
+.exercise-row input{ background:var(--void-2); border:1px solid var(--line-bright); color:var(--ink); padding:9px; font-family:var(--sans); font-size:13px;}
+.exercise-row input.ex-name{ flex:2; }
+.exercise-row input.ex-sets{ flex:1; width:50px; }
+.exercise-row .ex-del{ color:var(--danger); cursor:pointer; font-size:16px; padding:0 4px;}
+.saved-routine{ border:1px solid var(--line); background:var(--panel); padding:13px; margin-bottom:10px;}
+.saved-routine .rname{ font-family:var(--mono); font-size:13px; color:var(--ink); margin-bottom:6px;}
+.saved-routine .rex{ font-size:12px; color:var(--ink-dim); line-height:1.6;}
+.saved-routine .ractions{ display:flex; gap:8px; margin-top:10px;}
+
+/* ---------- boss arena ---------- */
+.boss-card{
+  margin:0 16px 14px; border:1px solid var(--line); background:var(--panel); position:relative; overflow:hidden;
+}
+.boss-card.locked{ opacity:.55; }
+.boss-card.defeated{ border-color:var(--gold); }
+.boss-banner{
+  padding:18px 16px; position:relative; border-bottom:1px solid var(--line);
+  background: radial-gradient(circle at 30% 20%, var(--bc, var(--danger))22, transparent 70%);
+}
+.boss-rank-tag{ font-family:var(--mono); font-size:10px; letter-spacing:.2em; color:var(--bc, var(--danger)); text-transform:uppercase; margin-bottom:6px;}
+.boss-name{ font-family:var(--mono); font-weight:700; font-size:18px; color:var(--ink); margin-bottom:4px;}
+.boss-epithet{ font-size:12px; color:var(--ink-dim); font-style:italic;}
+.boss-hp-bar{ height:8px; background:var(--void-2); border:1px solid var(--line); margin-top:12px; overflow:hidden; position:relative;}
+.boss-hp-bar i{ display:block; height:100%; background:linear-gradient(90deg, var(--bc,var(--danger)), #ff8a6b); transition:width .4s ease;}
+.boss-body{ padding:16px; }
+.boss-section-label{ font-family:var(--mono); font-size:10px; letter-spacing:.15em; color:var(--ink-dim); text-transform:uppercase; margin-bottom:8px;}
+.req-row{ display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--line); font-size:12.5px;}
+.req-row:last-child{ border-bottom:none;}
+.req-row .rv{ font-family:var(--mono); }
+.req-row .rv.met{ color:var(--good); }
+.req-row .rv.unmet{ color:var(--danger); }
+.boss-quest-item{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px;}
+.boss-quest-item:last-child{ border-bottom:none;}
+.boss-cta{
+  display:block; width:100%; margin-top:14px; padding:13px; text-align:center;
+  font-family:var(--mono); font-weight:700; font-size:13px; letter-spacing:.08em; text-transform:uppercase;
+  border:none; cursor:pointer; color:#fff;
+  background: linear-gradient(135deg, var(--bc,var(--danger)), #c41e3a);
+  box-shadow:0 4px 20px -4px var(--bc, var(--danger-glow));
+}
+.boss-cta:disabled{ background:var(--line); color:var(--ink-faint); box-shadow:none; cursor:not-allowed;}
+.boss-defeated-tag{ font-family:var(--mono); font-size:11px; color:var(--gold); letter-spacing:.1em; text-transform:uppercase; display:flex; align-items:center; gap:6px;}
+.boss-defeated-tag::before{ content:'✓'; }
+.boss-reward-row{ font-family:var(--mono); font-size:11px; color:var(--gold); margin-top:10px;}
+
+#boss-defeat-modal .rankup-card{ max-width:320px; }
+.boss-victory-icon{ font-size:44px; margin-bottom:6px; }
+
+/* ---------- focus timer ---------- */
+.timer-ring-wrap{ display:flex; justify-content:center; margin:20px 0 10px;}
+.timer-display{ font-family:var(--mono); font-size:42px; font-weight:700; color:var(--ink); text-align:center;}
+.timer-mode-label{ text-align:center; font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--blue); text-transform:uppercase; margin-bottom:4px;}
+.timer-controls{ display:flex; gap:10px; margin:18px 16px 0; }
+.preset-row{ display:flex; gap:8px; margin:0 16px 14px; flex-wrap:wrap;}
+.preset-chip{ font-family:var(--mono); font-size:11px; padding:7px 13px; border:1px solid var(--line-bright); color:var(--ink-dim); cursor:pointer;}
+.preset-chip.active{ border-color:var(--blue); color:var(--blue); background:rgba(91,140,255,.08);}
+.session-log-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:12px;}
+.session-log-row span:last-child{ font-family:var(--mono); color:var(--ink-dim);}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div id="toast-layer"></div>
+
+<!-- ============ SPLASH SCREEN (home-screen launches only) ============ -->
+<div id="splash-screen" style="display:none;">
+  <div class="splash-badge">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#5b8cff" stroke-width="2"><path d="M12 2l2.5 5 5.5.8-4 4 1 5.5L12 14.5 7 17.3l1-5.5-4-4 5.5-.8z"/></svg>
+  </div>
+  <div class="splash-title">THE SYSTEM</div>
+  <div class="splash-quote" id="splash-quote">Loading...</div>
+  <div class="splash-loadbar"><i id="splash-loadbar-fill"></i></div>
+  <div class="splash-credit">made by dev4vr4th &amp; Claude</div>
+</div>
+<div id="app">
+
+  <!-- ============ STATUS BAR ============ -->
+  <div class="statusbar">
+    <div class="sb-top">
+      <div class="sb-title">THE SYSTEM // <b id="hud-name">HUNTER</b></div>
+      <div class="sb-gold">◆ <span id="hud-gold">0</span></div>
+    </div>
+    <div class="rankplate" id="rankplate">
+      <div class="rank-badge" id="rank-badge">E</div>
+      <div class="rank-info">
+        <div class="rank-name" id="rank-title-name">Weakest Hunter</div>
+        <div class="rank-title" id="rank-sub">Rank E · Unawakened</div>
+        <div class="lvl-row">
+          <span id="lvl-num">LV 1</span>
+          <div class="xpbar"><i id="xp-fill" style="--pct:0%"></i></div>
+          <span id="xp-num">0/100</span>
+        </div>
+        <div class="gear-bonus-strip" id="gear-bonus-strip"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HOME VIEW ============ -->
+  <div class="view active" id="view-home">
+    <div class="section-title"><span class="t">Daily Quest</span></div>
+    <div id="quest-area"></div>
+    <div id="daily-cap-note" style="margin:0 16px 14px; font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); text-align:center;"></div>
+
+    <div class="section-title"><span class="t">Hunter Stats</span></div>
+    <div class="stat-grid" id="stat-grid"></div>
+
+    <div class="section-title"><span class="t">Today's Training Split</span></div>
+    <div class="sys-panel" id="split-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="sys-label">Generated Routine</div>
+      <div id="split-content"></div>
+      <button class="btn primary full" style="margin-top:12px;" id="regen-split">Regenerate Split</button>
+    </div>
+  </div>
+
+  <!-- ============ TRAIN VIEW ============ -->
+  <div class="view" id="view-train">
+    <div class="section-title"><span class="t">Strength Benchmarks</span></div>
+    <div class="sys-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="sys-label">Compound Lift Tracker</div>
+      <div id="lift-list"></div>
+    </div>
+
+    <div class="section-title"><span class="t">Log Custom Session</span></div>
+    <div class="sys-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="field"><label>Activity</label>
+        <select id="log-activity">
+          <option>Push-ups</option><option>Sit-ups</option><option>Squats</option>
+          <option>Pull-ups</option><option>Running (km)</option><option>Bench Press</option>
+          <option>Deadlift</option><option>Reading (pages)</option><option>Study Session (min)</option><option>Custom Strength Session</option><option>Custom Cardio Session</option>
+        </select>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:1;"><label id="log-amount-label">Reps</label><input type="number" id="log-amount" placeholder="0"></div>
+        <div class="field" style="flex:1;" id="log-sets-field"><label>Sets (optional)</label><input type="number" id="log-sets" placeholder="1"></div>
+      </div>
+      <button class="btn primary full" id="log-submit">Log Activity → Earn XP</button>
+    </div>
+
+    <div class="section-title"><span class="t">Your Custom Routines</span></div>
+    <div id="custom-routines-list" style="margin:0 16px 14px;"></div>
+    <div class="sys-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="sys-label">Build a Routine</div>
+      <div class="field"><label>Routine Name</label><input type="text" id="cr-name" placeholder="e.g. Push Day, Leg Day"></div>
+      <div id="cr-exercise-rows"></div>
+      <button class="btn full" id="cr-add-exercise" style="margin-bottom:12px;">+ Add Exercise</button>
+      <button class="btn primary full" id="cr-save">Save Routine</button>
+    </div>
+  </div>
+
+  <!-- ============ STORE VIEW ============ -->
+  <div class="view" id="view-store">
+    <div class="section-title"><span class="t">System Store</span></div>
+    <div style="margin:0 16px 14px; font-family:var(--mono); font-size:12px; color:var(--ink-dim);">
+      Balance: <span style="color:var(--gold);">◆ <span id="store-gold">0</span></span> — gear grants permanent passive bonuses while equipped.
+    </div>
+    <div class="store-grid" id="store-grid"></div>
+  </div>
+
+  <!-- ============ FOCUS VIEW ============ -->
+  <div class="view" id="view-focus">
+    <div class="section-title"><span class="t">Focus Timer</span></div>
+    <div class="sys-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="timer-mode-label" id="timer-mode-label">FOCUS SESSION</div>
+      <div class="timer-ring-wrap"><svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="88" fill="none" stroke="#1c2842" stroke-width="10"/>
+        <circle id="timer-progress" cx="100" cy="100" r="88" fill="none" stroke="#5b8cff" stroke-width="10" stroke-linecap="round" stroke-dasharray="553" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+      </svg></div>
+      <div class="timer-display" id="timer-display" style="margin-top:-130px; margin-bottom:30px;">25:00</div>
+
+      <div class="preset-row" id="timer-presets">
+        <div class="preset-chip active" data-min="25">25 min</div>
+        <div class="preset-chip" data-min="45">45 min</div>
+        <div class="preset-chip" data-min="60">60 min</div>
+        <div class="preset-chip" data-custom="1">Custom</div>
+      </div>
+      <div class="field" id="timer-custom-field" style="display:none; padding:0 16px;">
+        <input type="number" id="timer-custom-input" placeholder="Minutes">
+      </div>
+
+      <div class="timer-controls" style="margin:0;">
+        <button class="btn primary full" id="timer-start">Start Focus</button>
+        <button class="btn full" id="timer-reset" style="display:none;">Reset</button>
+      </div>
+    </div>
+
+    <div class="section-title"><span class="t">Today's Focus Log</span></div>
+    <div class="sys-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div id="focus-log"></div>
+      <div class="profile-row" style="border-bottom:none; padding-top:10px;">
+        <span>Total focused today</span><span id="focus-total">0 min</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BOSS VIEW ============ -->
+  <div class="view" id="view-boss">
+    <div class="section-title"><span class="t">Boss Arena</span></div>
+    <div style="margin:0 16px 14px; font-family:var(--mono); font-size:11.5px; color:var(--ink-dim); line-height:1.6;">
+      Each Rank guards a Boss. Meet the requirements to unlock the challenge, then complete its Quest to land the final blow.
+    </div>
+    <div id="boss-list"></div>
+  </div>
+
+  <!-- ============ ANALYTICS VIEW ============ -->
+  <div class="view" id="view-stats">
+    <div class="section-title"><span class="t">Consistency Streak</span></div>
+    <div class="streak-row" id="streak-row"></div>
+
+    <div class="section-title"><span class="t">Achievements</span></div>
+    <div class="ach-progress-note" id="ach-progress-note"></div>
+    <div class="ach-grid" id="ach-grid"></div>
+
+    <div class="section-title"><span class="t">Weekly Activity</span></div>
+    <div class="chart-box"><svg id="chart-weekly" viewBox="0 0 300 140"></svg></div>
+
+    <div class="section-title"><span class="t">Stat Growth Over Time</span></div>
+    <div class="chart-box"><svg id="chart-stats" viewBox="0 0 300 140"></svg></div>
+
+    <div class="section-title"><span class="t">Body Weight Log</span></div>
+    <div class="sys-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="row" style="margin-bottom:12px;">
+        <input type="number" id="weight-input" placeholder="Weight (kg)" style="flex:1; background:var(--void-2); border:1px solid var(--line-bright); color:var(--ink); padding:10px; font-family:var(--mono);">
+        <button class="btn" id="weight-log">Log</button>
+      </div>
+      <svg id="chart-weight" viewBox="0 0 300 100" style="width:100%;"></svg>
+    </div>
+  </div>
+
+  <!-- ============ PROFILE VIEW ============ -->
+  <div class="view" id="view-profile">
+    <div class="section-title"><span class="t">Settings</span></div>
+    <div class="sys-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="field" style="margin-bottom:8px;">
+        <label>Role</label>
+        <select id="role-select">
+          <option value="general">General — full Daily Quest with running</option>
+          <option value="student">Student — Study Session replaces running</option>
+        </select>
+      </div>
+      <p style="font-size:11.5px; color:var(--ink-dim); line-height:1.5;">
+        Student role swaps the daily run for a Study Session, and removes running from the workout logger — built for tight schedules and staying home. Boss fights that would require running ask for an equivalent study task instead.
+      </p>
+    </div>
+
+    <div class="section-title"><span class="t">Hunter Profile</span></div>
+    <div class="sys-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="profile-row"><span>Codename</span><span id="prof-name"></span></div>
+      <div class="profile-row"><span>Height</span><span id="prof-height"></span></div>
+      <div class="profile-row"><span>Weight</span><span id="prof-weight"></span></div>
+      <div class="profile-row"><span>Equipment</span><span id="prof-equip"></span></div>
+      <div class="profile-row"><span>Rank</span><span id="prof-rank"></span></div>
+      <div class="profile-row"><span>Level</span><span id="prof-level"></span></div>
+      <div class="profile-row"><span>Total Quests Cleared</span><span id="prof-quests"></span></div>
+      <div class="profile-row"><span>Longest Streak</span><span id="prof-streak"></span></div>
+      <div class="profile-row"><span>Achievements Unlocked</span><span id="prof-achievements"></span></div>
+      <div class="profile-row"><span>Bosses Defeated</span><span id="prof-bosses"></span></div>
+    </div>
+    <button class="btn primary full" id="share-progress-btn" style="margin:0 16px 18px; width:calc(100% - 32px);">Share Progress</button>
+
+    <div class="section-title"><span class="t">Data</span></div>
+    <div class="sys-panel">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <p style="font-size:12px; color:var(--ink-dim); margin-bottom:12px; line-height:1.6;">
+        All telemetry is stored locally on this device. Nothing is uploaded. Export a backup before switching devices, or restore one below.
+      </p>
+      <div class="row" style="margin-bottom:10px;">
+        <button class="btn full" id="export-data">Export Backup</button>
+        <button class="btn full" id="import-data-btn">Import Backup</button>
+      </div>
+      <input type="file" id="import-data-file" accept="application/json" style="display:none;">
+      <button class="btn full" id="wipe-data" style="border-color:var(--danger); color:var(--danger);">Reset System</button>
+    </div>
+    <div class="app-credit">made by dev4vr4th &amp; Claude</div>
+  </div>
+
+  <!-- ============ TAB BAR ============ -->
+  <div class="tabbar">
+    <div class="tab active" data-view="home"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>Home</div>
+    <div class="tab" data-view="train"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 7v10M18 7v10M2 12h2M20 12h2M6 12h12"/></svg>Train</div>
+    <div class="tab" data-view="boss"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l2.5 5 5.5.8-4 4 1 5.5L12 14.5 7 17.3l1-5.5-4-4 5.5-.8z"/></svg>Boss</div>
+    <div class="tab" data-view="focus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Focus</div>
+    <div class="tab" data-view="store"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 7h18l-1.5 11H4.5L3 7zM8 7V5a4 4 0 018 0v2"/></svg>Store</div>
+    <div class="tab" data-view="stats"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 19V9M11 19V5M18 19v-7"/></svg>Stats</div>
+    <div class="tab" data-view="profile"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Profile</div>
+  </div>
+
+</div>
+
+<!-- ============ ONBOARDING ============ -->
+<div id="onboarding">
+  <div class="ob-progress"><i id="p1"></i><i id="p2"></i><i id="p3"></i><i id="p4"></i></div>
+
+  <div class="ob-step active" data-step="1">
+    <h1>SYSTEM INITIALIZATION</h1>
+    <p class="sub">An unknown presence has chosen you. Before granting access, the System requires your details.</p>
+    <div class="field"><label>Codename</label><input type="text" id="ob-name" placeholder="What should the System call you?"></div>
+    <div class="row">
+      <div class="field" style="flex:1;"><label>Height (cm)</label><input type="number" id="ob-height" placeholder="175"></div>
+      <div class="field" style="flex:1;"><label>Weight (kg)</label><input type="number" id="ob-weight" placeholder="70"></div>
+    </div>
+    <div class="field"><label>Age</label><input type="number" id="ob-age" placeholder="25"></div>
+  </div>
+
+  <div class="ob-step" data-step="2">
+    <h1>EQUIPMENT SCAN</h1>
+    <p class="sub">What can you access for training? Select all that apply.</p>
+    <div class="choice-grid" id="ob-equip">
+      <div class="choice" data-val="bodyweight">Bodyweight Only</div>
+      <div class="choice" data-val="dumbbells">Dumbbells</div>
+      <div class="choice" data-val="barbell">Barbell + Rack</div>
+      <div class="choice" data-val="fullgym">Full Gym</div>
+      <div class="choice" data-val="bands">Resistance Bands</div>
+      <div class="choice" data-val="pullupbar">Pull-up Bar</div>
+    </div>
+  </div>
+
+  <div class="ob-step" data-step="3">
+    <h1>BASELINE ASSESSMENT</h1>
+    <p class="sub">Estimate your current physical limits. This calibrates your starting quests — answer honestly, not aspirationally.</p>
+    <div class="field"><label>Max Push-ups (one set)</label><input type="number" id="ob-pushups" placeholder="e.g. 15"></div>
+    <div class="field"><label>Max Squats (one set)</label><input type="number" id="ob-squats" placeholder="e.g. 20"></div>
+    <div class="field"><label>Can you run continuously?</label>
+      <select id="ob-cardio">
+        <option value="none">Not yet</option>
+        <option value="low">1-2 km</option>
+        <option value="mid">3-5 km</option>
+        <option value="high">5km+</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="ob-step" data-step="4">
+    <h1>GOAL DECLARATION</h1>
+    <p class="sub">What does the System optimize for?</p>
+    <div class="choice-grid" id="ob-goal">
+      <div class="choice" data-val="strength">Strength</div>
+      <div class="choice" data-val="endurance">Endurance</div>
+      <div class="choice" data-val="balanced">Balanced</div>
+      <div class="choice" data-val="fatloss">Fat Loss</div>
+    </div>
+  </div>
+
+  <div class="ob-nav">
+    <button class="btn full" id="ob-back" style="display:none;">Back</button>
+    <button class="btn primary full" id="ob-next">Continue</button>
+  </div>
+</div>
+
+<!-- ============ AWAKENING SCREEN ============ -->
+<div id="awaken" style="display:none;">
+  <div class="glow-text">A NOTIFICATION HAS ARRIVED</div>
+  <h1 id="awaken-headline">YOU HAVE BEEN CHOSEN</h1>
+  <p>The System has been installed. Your journey as an E-Rank Hunter begins now.</p>
+  <button class="btn primary" id="awaken-enter">Enter the System</button>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================= DATA LAYER ======================= */
+const SAVE_KEY = "solo_system_save_v1";
+
+const RANKS = ["E","D","C","B","A","S"];
+const RANK_TITLES = {
+  E:"Weakest Hunter", D:"Trainee Hunter", C:"Awakened Hunter",
+  B:"Elite Hunter", A:"National-Level Candidate", S:"National-Level Hunter"
+};
+const RANK_LEVEL_THRESHOLD = { E:1, D:6, C:13, B:22, A:33, S:46 };
+
+// Gear bonuses: meaningful passive effects while equipped, not just cosmetic.
+const STORE_ITEMS = [
+  {id:'dagger', name:"Hunter's Dagger", icon:'🗡️', rank:'E', price:50, slot:'weapon',
+    bonus:{type:'flatXp', value:2}, bonusLabel:'+2 XP per quest item'},
+  {id:'shadowblade', name:'Shadow Blade', icon:'⚔️', rank:'C', price:300, slot:'weapon',
+    bonus:{type:'xpPercent', value:0.10}, bonusLabel:'+10% XP from all activity'},
+  {id:'demonsword', name:"Demon King's Greatsword", icon:'🗿', rank:'S', price:2000, slot:'weapon',
+    bonus:{type:'xpPercent', value:0.25}, bonusLabel:'+25% XP from all activity'},
+  {id:'leather', name:'Leather Armor', icon:'🛡️', rank:'E', price:60, slot:'armor',
+    bonus:{type:'goldPercent', value:0.10}, bonusLabel:'+10% gold from quests'},
+  {id:'knightplate', name:"Knight's Plate", icon:'🦾', rank:'B', price:500, slot:'armor',
+    bonus:{type:'goldPercent', value:0.20}, bonusLabel:'+20% gold from quests'},
+  {id:'shadowcloak', name:"Monarch's Cloak", icon:'🧥', rank:'A', price:1200, slot:'armor',
+    bonus:{type:'streakShield', value:1}, bonusLabel:'1 free missed day per week, no penalty'},
+  {id:'orb', name:'Mana Orb', icon:'🔮', rank:'D', price:120,
+    bonus:{type:'statCap', value:5, stat:'SEN'}, bonusLabel:'+5 max Sense ceiling (still earned via training)'},
+  {id:'ironband', name:'Iron Will Band', icon:'💍', rank:'C', price:350,
+    bonus:{type:'statCap', value:6, stat:'STR'}, bonusLabel:'+6 max Strength ceiling (still earned via training)'},
+  {id:'swiftboots', name:'Swiftstep Boots', icon:'👢', rank:'B', price:700,
+    bonus:{type:'statCap', value:6, stat:'AGI'}, bonusLabel:'+6 max Agility ceiling (still earned via training)'},
+  {id:'crown', name:'Shadow Monarch Crown', icon:'👑', rank:'S', price:2500,
+    bonus:{type:'statCapAll', value:10}, bonusLabel:'+10 max ceiling, all stats (still earned via training)'},
+];
+
+const ACHIEVEMENTS = [
+  {id:'first_quest', icon:'🎯', name:'First Steps', desc:'Clear your first Daily Quest', check:s=>s.questsCleared>=1},
+  {id:'streak_3', icon:'🔥', name:'Building Habit', desc:'Reach a 3-day streak', check:s=>s.longestStreak>=3},
+  {id:'streak_7', icon:'⚡', name:'One Week Strong', desc:'Reach a 7-day streak', check:s=>s.longestStreak>=7},
+  {id:'streak_30', icon:'🌟', name:'Unbreakable', desc:'Reach a 30-day streak', check:s=>s.longestStreak>=30},
+  {id:'rank_d', icon:'📈', name:'No Longer Weakest', desc:'Reach Rank D', check:s=>RANKS.indexOf(s.rank)>=1},
+  {id:'rank_c', icon:'💠', name:'Awakened', desc:'Reach Rank C', check:s=>RANKS.indexOf(s.rank)>=2},
+  {id:'rank_a', icon:'🩸', name:'National Candidate', desc:'Reach Rank A', check:s=>RANKS.indexOf(s.rank)>=4},
+  {id:'rank_s', icon:'👑', name:'Shadow Monarch', desc:'Reach Rank S', check:s=>RANKS.indexOf(s.rank)>=5},
+  {id:'quests_10', icon:'📋', name:'Reliable', desc:'Clear 10 Daily Quests', check:s=>s.questsCleared>=10},
+  {id:'quests_50', icon:'🗂️', name:'Veteran Hunter', desc:'Clear 50 Daily Quests', check:s=>s.questsCleared>=50},
+  {id:'quests_100', icon:'🏆', name:'Centurion', desc:'Clear 100 Daily Quests', check:s=>s.questsCleared>=100},
+  {id:'first_purchase', icon:'💰', name:'First Purchase', desc:'Buy your first item from the Store', check:s=>s.inventory.length>=1},
+  {id:'full_loadout', icon:'⚔️', name:'Fully Equipped', desc:'Equip both a weapon and armor piece', check:s=>s.equipped.weapon && s.equipped.armor},
+  {id:'lift_logged', icon:'🏋️', name:'Benchmarked', desc:'Log a value for any compound lift', check:s=>Object.values(s.lifts).some(v=>v>0)},
+  {id:'custom_routine', icon:'🛠️', name:'Architect', desc:'Save a custom workout routine', check:s=>s.customRoutines.length>=1},
+  {id:'focus_60', icon:'📚', name:'Focused Mind', desc:'Log 60 minutes of total focus time', check:s=>s.totalFocusMinutes>=60},
+  {id:'focus_600', icon:'🧠', name:'Deep Work', desc:'Log 600 minutes of total focus time', check:s=>s.totalFocusMinutes>=600},
+  {id:'survived_penalty', icon:'⛓️', name:'Paid the Price', desc:'Recover from a penalty zone', check:s=>s.penaltiesServed>=1},
+  {id:'str_25', icon:'💪', name:'Real Strength', desc:'Reach 25 Strength', check:s=>s.stats.STR>=25},
+  {id:'level_20', icon:'🆙', name:'Twenty Levels Deep', desc:'Reach Level 20', check:s=>s.level>=20},
+  {id:'first_boss', icon:'⚔️', name:'First Blood', desc:'Defeat your first Boss', check:s=>s.defeatedBosses.length>=1},
+  {id:'three_bosses', icon:'🗡️', name:'Gatekeeper Slayer', desc:'Defeat 3 Bosses', check:s=>s.defeatedBosses.length>=3},
+  {id:'all_bosses', icon:'👑', name:'Shadow Monarch Ascendant', desc:'Defeat every Boss', check:s=>s.defeatedBosses.length>=BOSSES.length},
+];
+
+// Boss roster — one gatekeeper per Rank, loosely modeled on Solo Leveling antagonists.
+// Each boss has "requirements" (stats/level/achievements you must already have to unlock
+// the fight) and a "quest" (a mixed fitness + productivity task you complete in real life
+// to land the finishing blow). Defeating a boss is what actually promotes you to the next Rank.
+const BOSSES = [
+  {
+    id:'goblin', rank:'E', color:'#6b7a9e', name:'Trial Goblin', epithet:'"Even the weakest hunter has to start somewhere."',
+    icon:'👺', hp:100,
+    requirements:[ {label:'Level 3+', check:s=>s.level>=3}, {label:'Strength 12+', check:s=>s.stats.STR>=12} ],
+    quest:[ {id:'p1', name:'Push-ups', target:15, unit:'reps'}, {id:'sq1', name:'Squats', target:15, unit:'reps'}, {id:'f1', name:'Focus session', target:10, unit:'min'} ],
+    reward:{ xp:60, gold:80, title:'Goblin Slayer', statAll:1 }
+  },
+  {
+    id:'golem', rank:'D', color:'#c98a4b', name:'Stone Golem', epithet:'"Brute force meets brute force."',
+    icon:'🗿', hp:220,
+    requirements:[ {label:'Level 7+', check:s=>s.level>=7}, {label:'Vitality 16+', check:s=>s.stats.VIT>=16}, {label:'"Building Habit" achievement', check:s=>s.unlockedAchievements.includes('streak_3')} ],
+    quest:[ {id:'sq2', name:'Squats', target:25, unit:'reps'}, {id:'r1', name:'Run', target:2, unit:'km'}, {id:'f2', name:'Focus session', target:15, unit:'min'} ],
+    reward:{ xp:80, gold:150, title:'Golem Breaker', statAll:1 }
+  },
+  {
+    id:'igris', rank:'C', color:'#5b8cff', name:'Igris, the Blood-Red Knight', epithet:'"Loyalty is earned, not given."',
+    icon:'⚔️', hp:400,
+    requirements:[ {label:'Level 14+', check:s=>s.level>=14}, {label:'All stats 18+', check:s=>Object.values(s.stats).every(v=>v>=18)}, {label:'10 Quests Cleared', check:s=>s.questsCleared>=10} ],
+    quest:[ {id:'p2', name:'Push-ups', target:30, unit:'reps'}, {id:'su1', name:'Sit-ups', target:30, unit:'reps'}, {id:'read1', name:'Read', target:5, unit:'pages'}, {id:'f3', name:'Focus session', target:20, unit:'min'} ],
+    reward:{ xp:100, gold:250, title:'Knight Commander', statAll:2 }
+  },
+  {
+    id:'iceelf', rank:'B', color:'#a78bfa', name:'Ice Elf Lord', epithet:'"Cold, precise, merciless."',
+    icon:'🧊', hp:650,
+    requirements:[ {label:'Level 23+', check:s=>s.level>=23}, {label:'Agility 24+', check:s=>s.stats.AGI>=24}, {label:'Sense 20+', check:s=>s.stats.SEN>=20} ],
+    quest:[ {id:'r2', name:'Run', target:3, unit:'km'}, {id:'read2', name:'Read', target:8, unit:'pages'}, {id:'f4', name:'Focus session', target:25, unit:'min'} ],
+    reward:{ xp:120, gold:400, title:'Frostbane', statAll:2 }
+  },
+  {
+    id:'beru', rank:'A', color:'#ff5b8c', name:'Beru, the Ant King', epithet:'"Your Highness... I live to serve."',
+    icon:'🐜', hp:950,
+    requirements:[ {label:'Level 34+', check:s=>s.level>=34}, {label:'Strength 32+', check:s=>s.stats.STR>=32}, {label:'Vitality 32+', check:s=>s.stats.VIT>=32}, {label:'"Veteran Hunter" achievement', check:s=>s.unlockedAchievements.includes('quests_50')} ],
+    quest:[ {id:'p3', name:'Push-ups', target:35, unit:'reps'}, {id:'sq3', name:'Squats', target:35, unit:'reps'}, {id:'r3', name:'Run', target:4, unit:'km'}, {id:'f5', name:'Focus session', target:30, unit:'min'} ],
+    reward:{ xp:150, gold:600, title:'Ant King\'s Bane', statAll:3 }
+  },
+  {
+    id:'architect', rank:'S', color:'#f4d35e', name:'The Architect', epithet:'"The Monarch before the Monarch."',
+    icon:'👑', hp:1500,
+    requirements:[ {label:'Level 46+', check:s=>s.level>=46}, {label:'All stats 40+', check:s=>Object.values(s.stats).every(v=>v>=40)}, {label:'15+ Achievements unlocked', check:s=>s.unlockedAchievements.length>=15} ],
+    quest:[ {id:'p4', name:'Push-ups', target:40, unit:'reps'}, {id:'su2', name:'Sit-ups', target:40, unit:'reps'}, {id:'sq4', name:'Squats', target:40, unit:'reps'}, {id:'r4', name:'Run', target:5, unit:'km'}, {id:'read3', name:'Read', target:15, unit:'pages'}, {id:'f6', name:'Focus session', target:40, unit:'min'} ],
+    reward:{ xp:200, gold:1000, title:'Shadow Monarch', statAll:4 }
+  },
+];
+
+function defaultState(){
+  return {
+    onboarded:false,
+    profile:{ name:"Hunter", height:175, weight:70, age:25, equipment:[], goal:"balanced", baseline:{pushups:10,squats:15,cardio:"low"} },
+    rank:"E", level:1, xp:0, gold:0,
+    stats:{ STR:10, AGI:10, VIT:10, SEN:10 },
+    statHistory:[],
+    quest:{ date:null, items:[], claimed:false, isRestDay:false },
+    streak:0, longestStreak:0, lastQuestDate:null, questClearDates:[],
+    history:[],
+    weightLog:[],
+    lifts:{ bench:0, squat:0, pullups:0, deadlift:0 },
+    inventory:[], equipped:{weapon:null, armor:null, accessory:null},
+    questsCleared:0,
+    penaltyActive:false, penaltyTasksLeft:0, penaltiesServed:0,
+    failedDates:[],
+    unlockedAchievements:[],
+    customRoutines:[],
+    streakShieldUsedThisWeek:false, streakShieldWeekStart:null,
+    totalFocusMinutes:0,
+    focusSessions:[], // {date, minutes, type}
+    defeatedBosses:[],
+    activeBossFight:null, // {bossId, quest:[{id,name,target,unit,done}]}
+    totalPushups:0, totalSitups:0, totalSquats:0, totalRunKm:0, totalPagesRead:0,
+    xpEarnedDate:null, xpEarnedToday:0, // resets daily; caps how much XP can be earned per day
+    goldEarnedDate:null, goldEarnedToday:0, // resets daily; caps how much gold can be earned per day
+    statCapBonusAll:0, statCapBonusPerStat:{}, // raised by certain store purchases; raises the max each stat can reach
+    customLogStatDate:{}, // rate-limits stat gains from custom logging to once/activity/day
+    role:'general' // 'general' or 'student' — changes daily quest composition (see ROLE_CONFIG)
+  };
+}
+
+let state = load();
+
+// Shared reconciliation logic for any save data coming in from either localStorage
+// (load) or a manually imported backup file — both paths must go through the exact
+// same merge/backfill/correction steps, or imported saves can reintroduce bugs that
+// were already fixed in newer versions (e.g. a stale incorrect rank value).
+function reconcileState(parsed){
+  const merged = Object.assign(defaultState(), parsed);
+  merged.stats = Object.assign(defaultState().stats, parsed.stats||{});
+  merged.equipped = Object.assign({weapon:null,armor:null,accessory:null}, parsed.equipped||{});
+  // Backfill: older saves predate the full quest-clear history array and only ever
+  // stored the single most recent clear date — recover at least that one entry so
+  // today/yesterday's clear doesn't appear to vanish from the streak grid.
+  merged.questClearDates = Array.isArray(parsed.questClearDates) ? parsed.questClearDates.slice() : [];
+  if(parsed.lastQuestDate && !merged.questClearDates.includes(parsed.lastQuestDate)){
+    merged.questClearDates.push(parsed.lastQuestDate);
+  }
+  // Re-derive rank from the actual current rules instead of trusting whatever rank
+  // value happens to be sitting in the save file — this matters most for backups
+  // exported from an older version where the rank/boss-gating logic had bugs since
+  // fixed. Recomputing here means importing an old backup self-heals instead of
+  // re-importing a stale incorrect rank.
+  let levelImpliedIdx = 0;
+  for(const r of RANKS){ if(merged.level >= RANK_LEVEL_THRESHOLD[r]) levelImpliedIdx = RANKS.indexOf(r); }
+  const bossEarnedIdx = merged.defeatedBosses.length
+    ? Math.max(...merged.defeatedBosses.map(id => {
+        const b = BOSSES.find(b=>b.id===id);
+        return b ? RANKS.indexOf(b.rank) + 1 : 0;
+      }))
+    : 0;
+  const nextUndefeatedBoss = BOSSES.find(b => !merged.defeatedBosses.includes(b.id));
+  const levelCapIdx = nextUndefeatedBoss ? Math.min(levelImpliedIdx, RANKS.indexOf(nextUndefeatedBoss.rank)) : levelImpliedIdx;
+  const correctIdx = Math.max(bossEarnedIdx, levelCapIdx);
+  merged.rank = RANKS[Math.min(correctIdx, RANKS.length-1)];
+  return merged;
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    return reconcileState(parsed);
+  }catch(e){ return defaultState(); }
+}
+function save(){ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
+
+/* ======================= UTIL ======================= */
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+function rankColorVar(r){ return `var(--rank-${r})`; }
+function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+function isoWeekStart(d){ const dt=new Date(d); const day=dt.getDay(); const diff=(day===0?-6:1)-day; dt.setDate(dt.getDate()+diff); return dt.toISOString().slice(0,10); }
+
+function toast(msg, type){
+  const layer = document.getElementById('toast-layer');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' '+type : '');
+  el.innerHTML = msg;
+  layer.appendChild(el);
+  setTimeout(()=> el.remove(), 3000);
+}
+
+/* ======================= GEAR BONUS ENGINE ======================= */
+function getActiveBonuses(){
+  const bonuses = [];
+  Object.values(state.equipped).forEach(itemId=>{
+    if(!itemId) return;
+    const item = STORE_ITEMS.find(i=>i.id===itemId);
+    if(item && item.bonus.type !== 'statCap' && item.bonus.type !== 'statCapAll'){
+      bonuses.push(item);
+    }
+  });
+  return bonuses;
+}
+function applyXpBonus(baseXp){
+  let xp = baseXp;
+  const bonuses = getActiveBonuses();
+  bonuses.forEach(item=>{
+    if(item.bonus.type === 'xpPercent') xp += baseXp * item.bonus.value;
+  });
+  return Math.round(xp);
+}
+function applyFlatXpBonus(itemCount){
+  const bonuses = getActiveBonuses();
+  let flat = 0;
+  bonuses.forEach(item=>{ if(item.bonus.type === 'flatXp') flat += item.bonus.value * itemCount; });
+  return flat;
+}
+function applyGoldBonus(baseGold){
+  let gold = baseGold;
+  const bonuses = getActiveBonuses();
+  bonuses.forEach(item=>{ if(item.bonus.type === 'goldPercent') gold += baseGold * item.bonus.value; });
+  return Math.round(gold);
+}
+function hasStreakShield(){
+  return getActiveBonuses().some(item=>item.bonus.type === 'streakShield');
+}
+// Base stat cap is 60. Certain accessories raise the CEILING (not the current value) —
+// so a long-term player isn't artificially capped, but can't buy their way to a higher
+// stat instantly; the actual stat still has to be earned through quests and workouts.
+const BASE_STAT_CAP = 60;
+function getStatCap(statKey){
+  const allBonus = state.statCapBonusAll || 0;
+  const perStatBonus = (state.statCapBonusPerStat && statKey) ? (state.statCapBonusPerStat[statKey]||0) : 0;
+  return BASE_STAT_CAP + allBonus + perStatBonus;
+}
+function renderGearBonusStrip(){
+  const strip = document.getElementById('gear-bonus-strip');
+  const bonuses = getActiveBonuses();
+  strip.innerHTML = bonuses.map(item=>`<span class="gear-chip">${item.icon} ${item.bonusLabel}</span>`).join('');
+}
+
+/* ======================= ACHIEVEMENTS ENGINE ======================= */
+function checkAchievements(){
+  let newlyUnlocked = [];
+  ACHIEVEMENTS.forEach(ach=>{
+    if(!state.unlockedAchievements.includes(ach.id) && ach.check(state)){
+      state.unlockedAchievements.push(ach.id);
+      newlyUnlocked.push(ach);
+    }
+  });
+  if(newlyUnlocked.length){
+    save();
+    newlyUnlocked.forEach((ach,i)=>{
+      setTimeout(()=> toast(`<b>ACHIEVEMENT UNLOCKED</b><br>${ach.icon} ${ach.name}`, 'gold'), i*600);
+    });
+  }
+}
+
+/* ======================= ONBOARDING ======================= */
+const obSteps = Array.from(document.querySelectorAll('.ob-step'));
+let obIndex = 0;
+const obEquip = new Set();
+let obGoal = null;
+
+function renderObProgress(){
+  for(let i=1;i<=4;i++) document.getElementById('p'+i).classList.toggle('done', i <= obIndex+1);
+}
+function showObStep(i){
+  obSteps.forEach((s,idx)=> s.classList.toggle('active', idx===i));
+  document.getElementById('ob-back').style.display = i===0 ? 'none':'block';
+  document.getElementById('ob-next').textContent = i===3 ? 'Begin Awakening' : 'Continue';
+  renderObProgress();
+}
+document.getElementById('ob-equip').addEventListener('click', e=>{
+  const c = e.target.closest('.choice'); if(!c) return;
+  c.classList.toggle('sel');
+  const v = c.dataset.val;
+  obEquip.has(v) ? obEquip.delete(v) : obEquip.add(v);
+});
+document.getElementById('ob-goal').addEventListener('click', e=>{
+  const c = e.target.closest('.choice'); if(!c) return;
+  document.querySelectorAll('#ob-goal .choice').forEach(x=>x.classList.remove('sel'));
+  c.classList.add('sel');
+  obGoal = c.dataset.val;
+});
+document.getElementById('ob-next').addEventListener('click', ()=>{
+  if(obIndex < 3){ obIndex++; showObStep(obIndex); return; }
+  const name = document.getElementById('ob-name').value.trim() || "Hunter";
+  const height = parseFloat(document.getElementById('ob-height').value) || 175;
+  const weight = parseFloat(document.getElementById('ob-weight').value) || 70;
+  const age = parseFloat(document.getElementById('ob-age').value) || 25;
+  const pushups = parseInt(document.getElementById('ob-pushups').value) || 10;
+  const squats = parseInt(document.getElementById('ob-squats').value) || 15;
+  const cardio = document.getElementById('ob-cardio').value;
+
+  state.profile = {
+    name, height, weight, age,
+    equipment: Array.from(obEquip.size?obEquip:['bodyweight']),
+    goal: obGoal || 'balanced',
+    baseline: {pushups, squats, cardio}
+  };
+  state.stats.STR = clamp(8 + Math.round(pushups/3), 8, 25);
+  state.stats.VIT = clamp(8 + Math.round(squats/4), 8, 25);
+  state.stats.AGI = cardio==='high'?20:cardio==='mid'?15:cardio==='low'?12:9;
+  state.stats.SEN = 10;
+  state.weightLog.push({date:todayStr(), weight});
+  state.onboarded = true;
+  generateDailyQuest(true);
+  save();
+
+  document.getElementById('onboarding').style.display='none';
+  document.getElementById('awaken').style.display='flex';
+});
+document.getElementById('ob-back').addEventListener('click', ()=>{ if(obIndex>0){ obIndex--; showObStep(obIndex); } });
+document.getElementById('awaken-enter').addEventListener('click', ()=>{
+  document.getElementById('awaken').style.display='none';
+  renderAll();
+});
+
+/* ======================= DAILY QUEST GENERATION (health-aware) ======================= */
+// Rest/light day logic: day index 3 (Thursday) is a light recovery day,
+// and Sunday is a full rest day from the mandatory quest. This mirrors
+// real training-split recovery guidance rather than 7-day max intensity.
+function isRestDay(date){
+  const day = date.getDay(); // 0=Sun
+  return day === 0;
+}
+function isLightDay(date){
+  const day = date.getDay();
+  return day === 4; // Thursday: light/recovery
+}
+
+// Role system: changes daily quest composition for users with tighter schedules or
+// different priorities. "Student" swaps the run for a study session, since a tight
+// schedule and staying home most of the day makes outdoor running impractical —
+// the study quest still earns the same XP/gold and still counts as the 4th quest item.
+const ROLE_CONFIG = {
+  general: { label:'General', hasRun:true },
+  student: { label:'Student', hasRun:false }
+};
+function currentRole(){ return ROLE_CONFIG[state.role] ? state.role : 'general'; }
+
+// Targets grow gently with level and plateau well short of anything extreme —
+// the goal is a sustainable daily habit, not a 100-rep/10km gauntlet. Growth
+// influence stops increasing past level 35 (you keep leveling, but the workout
+// itself stays at a manageable, repeatable size).
+function adaptiveTarget(base, level, intensityMult, cap){
+  const growth = 1 + Math.min(level-1, 35) * 0.028;
+  return Math.min(Math.round(base * growth * intensityMult), cap);
+}
+function generateDailyQuest(force){
+  const today = todayStr();
+  if(!force && state.quest.date === today) return;
+
+  const now = new Date();
+  const lvl = state.level;
+
+  if(isRestDay(now)){
+    state.quest = { date: today, items:[], claimed:true, isRestDay:true };
+    // rest days don't break streaks and auto-count as cleared for streak purposes
+    save();
+    return;
+  }
+
+  const mult = isLightDay(now) ? 0.5 : 1;
+  const pushupBase = clamp(state.profile.baseline.pushups || 10, 6, 16);
+  const squatBase = clamp(state.profile.baseline.squats || 12, 8, 18);
+  const items = [
+    {id:'pushups', name:'Push-ups', target: adaptiveTarget(pushupBase, lvl, mult, 35), unit:'reps', xp:25, gold:10, done:false},
+    {id:'situps', name:'Sit-ups', target: adaptiveTarget(15, lvl, mult, 38), unit:'reps', xp:25, gold:10, done:false},
+    {id:'squats', name:'Squats', target: adaptiveTarget(squatBase, lvl, mult, 38), unit:'reps', xp:25, gold:10, done:false},
+  ];
+
+  if(ROLE_CONFIG[currentRole()].hasRun){
+    items.push({id:'run', name:'Run', target: state.profile.baseline.cardio==='none' ? (mult<1?1:1.5) : adaptiveTarget(1.5, lvl, mult, 4), unit:'km', xp:35, gold:15, done:false});
+  } else {
+    items.push({id:'study', name:'Study Session', target: adaptiveTarget(15, lvl, mult, 40), unit:'min', xp:35, gold:15, done:false});
+  }
+
+  state.quest = { date: today, items, claimed:false, isRestDay:false, isLightDay: mult<1 };
+  save();
+}
+
+function renderQuests(){
+  generateDailyQuest(false);
+  const area = document.getElementById('quest-area');
+
+  if(state.quest.isRestDay){
+    area.innerHTML = `
+      <div class="rest-banner">
+        <b>REST DAY.</b> The System mandates recovery — muscle grows during rest, not just training. No quest today. Your streak stays intact. Use the Focus tab if you want to put today's energy into studying instead.
+      </div>`;
+    return;
+  }
+
+  const card = document.createElement('div');
+  card.className = 'quest-card';
+  card.innerHTML = `
+    <div class="quest-head"><h3>System Notice</h3><div class="quest-timer" id="quest-timer">23:59:59</div></div>
+    <div class="quest-subnote">${state.quest.isLightDay ? 'Light recovery day — targets reduced 50%.' : 'Full intensity day.'}</div>
+    <div id="quest-list"></div>
+    <div class="quest-progress-row"><div class="xpbar"><i id="quest-fill" style="--pct:0%"></i></div><span class="pill" id="quest-count">0/4</span></div>
+    <button class="quest-cta" id="quest-claim" disabled>Complete Quest</button>
+  `;
+  area.innerHTML = '';
+  area.appendChild(card);
+
+  const list = document.getElementById('quest-list');
+  state.quest.items.forEach((q, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'quest-item';
+    row.innerHTML = `
+      <div class="q-check ${q.done?'done':''}" data-idx="${idx}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <div class="q-name ${q.done?'done':''}">${q.name}</div>
+      <div class="q-target">${q.target} ${q.unit==='km'?'km':q.unit==='min'?'min':'reps'}</div>
+      <div class="q-reward">+${q.xp}xp</div>
+    `;
+    list.appendChild(row);
+  });
+  document.querySelectorAll('.q-check').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const idx = parseInt(el.dataset.idx);
+      state.quest.items[idx].done = !state.quest.items[idx].done;
+      save();
+      renderQuests();
+    });
+  });
+  const doneCount = state.quest.items.filter(q=>q.done).length;
+  const total = state.quest.items.length;
+  document.getElementById('quest-count').textContent = `${doneCount}/${total}`;
+  document.getElementById('quest-fill').style.setProperty('--pct', (doneCount/total*100)+'%');
+  const claimBtn = document.getElementById('quest-claim');
+  claimBtn.disabled = doneCount < total || state.quest.claimed;
+  claimBtn.textContent = state.quest.claimed ? 'Quest Cleared Today' : 'Complete Quest';
+
+  updateQuestTimer();
+}
+
+function updateQuestTimer(){
+  const timerEl = document.getElementById('quest-timer');
+  if(!timerEl) return;
+  const now = new Date();
+  const end = new Date(); end.setHours(23,59,59,999);
+  let diff = Math.max(0, end-now);
+  const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+  const m = String(Math.floor(diff%3600000/60000)).padStart(2,'0');
+  const s = String(Math.floor(diff%60000/1000)).padStart(2,'0');
+  timerEl.textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateQuestTimer, 1000);
+
+document.getElementById('app').addEventListener('click', e=>{
+  if(e.target.id === 'quest-claim') claimQuest();
+});
+function claimQuest(){
+  if(state.quest.claimed) return;
+  const allDone = state.quest.items.every(q=>q.done);
+  if(!allDone) return;
+
+  const baseXp = state.quest.items.reduce((a,q)=>a+q.xp,0);
+  const flatBonus = applyFlatXpBonus(state.quest.items.length);
+  const xpGain = applyXpBonus(baseXp) + flatBonus;
+  const baseGold = state.quest.items.reduce((a,q)=>a+q.gold,0);
+  const goldGain = applyGoldBonus(baseGold);
+
+  state.quest.claimed = true;
+  state.questsCleared++;
+
+  const today = todayStr();
+  if(state.lastQuestDate){
+    const gap = daysBetween(state.lastQuestDate, today);
+    if(gap === 1) state.streak++;
+    else if(gap === 0){ /* no change */ }
+    else state.streak = 1;
+  } else {
+    state.streak = 1;
+  }
+  state.lastQuestDate = today;
+  state.questClearDates = state.questClearDates || [];
+  if(!state.questClearDates.includes(today)) state.questClearDates.push(today);
+  state.longestStreak = Math.max(state.longestStreak, state.streak);
+
+  state.stats.STR = Math.min(state.stats.STR+1, getStatCap('STR'));
+  state.stats.VIT = Math.min(state.stats.VIT+1, getStatCap('VIT'));
+  state.stats.AGI = Math.min(state.stats.AGI+1, getStatCap('AGI'));
+  state.stats.SEN = Math.min(state.stats.SEN + (Math.random() < 0.4 ? 1 : 0), getStatCap('SEN'));
+  state.statHistory.push({date:today, ...state.stats});
+
+  // Credit toward an active boss fight using today's actual quest targets cleared.
+  const nameForBoss = {pushups:'Push-ups', situps:'Sit-ups', squats:'Squats', run:'Running (km)', study:'Study Session'};
+  state.quest.items.forEach(q=>{
+    const bossName = nameForBoss[q.id];
+    if(bossName) creditBossProgress(bossName, q.target);
+  });
+
+  const grantedXp = addXPCapped(xpGain);
+  const grantedGold = addGoldCapped(goldGain);
+  state.penaltyActive = false;
+
+  toast(`<b>QUEST CLEARED</b><br>+${grantedXp} XP · +${grantedGold} Gold`);
+  save();
+  checkAchievements();
+  renderAll();
+}
+
+// Daily XP cap: this is the actual time-gate. No matter how much you log in one day —
+// quests, custom sessions, focus time, lift PRs — XP earned is capped per calendar day.
+// This is what keeps S-Rank a roughly year-long journey instead of something a long
+// session or repeated logging could shortcut. Boss rewards are exempt (handled separately
+// in finishBossFight) since they're milestone payouts, not daily grinding.
+const DAILY_XP_CAP = 200;
+
+function addXPCapped(amount){
+  const today = todayStr();
+  if(state.xpEarnedDate !== today){ state.xpEarnedDate = today; state.xpEarnedToday = 0; }
+  const remaining = Math.max(0, DAILY_XP_CAP - state.xpEarnedToday);
+  const granted = Math.min(amount, remaining);
+  state.xpEarnedToday += granted;
+  if(granted > 0) addXP(granted);
+  return granted;
+}
+
+// Daily gold cap — same purpose as the XP cap, closing the exploit where logging
+// unrealistic rep/set counts in the custom logger generated unlimited gold (gold itself
+// had no ceiling at all before this fix, regardless of XP). Boss gold rewards are exempt
+// since they're rare milestone payouts, not a repeatable grind.
+const DAILY_GOLD_CAP = 150;
+function addGoldCapped(amount){
+  const today = todayStr();
+  if(state.goldEarnedDate !== today){ state.goldEarnedDate = today; state.goldEarnedToday = 0; }
+  const remaining = Math.max(0, DAILY_GOLD_CAP - state.goldEarnedToday);
+  const granted = Math.min(amount, remaining);
+  state.goldEarnedToday += granted;
+  state.gold += granted;
+  return granted;
+}
+
+function addXP(amount){
+  state.xp += amount;
+  let xpNeeded = 100 + (state.level-1)*20;
+  while(state.xp >= xpNeeded){
+    state.xp -= xpNeeded;
+    state.level++;
+    xpNeeded = 100 + (state.level-1)*20;
+    checkRankUp();
+  }
+  save();
+}
+function checkRankUp(){
+  // Your rank is the HIGHER of two floors:
+  //  (1) the rank earned by defeating bosses so far (this can never be taken away)
+  //  (2) the rank implied by your level, capped at the tier of the next undefeated
+  //      boss (so leveling alone can approach a boss gate but never skip past it)
+  // Taking the max of these two prevents the bug where clearing a quest after a boss
+  // kill would pull rank back down to whatever level alone implies.
+  let levelImpliedIdx = 0; // index into RANKS, default E
+  for(const r of RANKS){ if(state.level >= RANK_LEVEL_THRESHOLD[r]) levelImpliedIdx = RANKS.indexOf(r); }
+
+  const bossEarnedIdx = state.defeatedBosses.length
+    ? Math.max(...state.defeatedBosses.map(id => RANKS.indexOf(BOSSES.find(b=>b.id===id).rank) + 1))
+    : 0;
+
+  const nextUndefeatedBoss = BOSSES.find(b => !state.defeatedBosses.includes(b.id));
+  const levelCapIdx = nextUndefeatedBoss ? Math.min(levelImpliedIdx, RANKS.indexOf(nextUndefeatedBoss.rank)) : levelImpliedIdx;
+
+  const finalIdx = Math.max(bossEarnedIdx, levelCapIdx);
+  const newRank = RANKS[Math.min(finalIdx, RANKS.length-1)];
+
+  if(newRank !== state.rank){
+    const wasHigher = RANKS.indexOf(newRank) > RANKS.indexOf(state.rank);
+    state.rank = newRank;
+    if(wasHigher) showRankModal(newRank, true);
+  }
+}
+function showRankModal(rank, isUp){
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `
+    <div class="rankup-card ${isUp?'':'down'}" style="--rk:${rankColorVar(rank)}">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="rankup-eyebrow">${isUp ? 'Rank Up' : 'Rank Down'}</div>
+      <div class="rankup-rank">${rank}</div>
+      <div class="rankup-name">${RANK_TITLES[rank]}</div>
+      ${isUp ? '<button class="btn primary full" id="rankmodal-share" style="margin-bottom:8px;">Share Progress</button>' : ''}
+      <button class="btn ${isUp?'':'primary'} full" id="rankmodal-close">Continue</button>
+    </div>`;
+  document.body.appendChild(bg);
+  if(isUp){
+    document.getElementById('rankmodal-share').addEventListener('click', shareCurrentStats);
+  }
+  document.getElementById('rankmodal-close').addEventListener('click', ()=>{ bg.remove(); renderAll(); });
+}
+
+/* ======================= PENALTY SYSTEM (rank demotion) ======================= */
+function checkPenalty(){
+  if(!state.onboarded) return;
+  const today = todayStr();
+  if(!state.lastQuestDate) return;
+  const gap = daysBetween(state.lastQuestDate, today);
+  const todayIsRest = isRestDay(new Date());
+  if(todayIsRest) return;
+
+  const weekStart = isoWeekStart(today);
+  if(state.streakShieldWeekStart !== weekStart){
+    state.streakShieldWeekStart = weekStart;
+    state.streakShieldUsedThisWeek = false;
+  }
+
+  const missedQuestDay = gap >= 2 && !state.penaltyActive && state.quest.date !== today;
+  if(missedQuestDay){
+    if(hasStreakShield() && !state.streakShieldUsedThisWeek){
+      state.streakShieldUsedThisWeek = true;
+      state.lastQuestDate = today; // forgive the gap
+      save();
+      toast(`<b>STREAK SHIELD USED</b><br>Monarch's Cloak absorbed a missed day.`);
+      return;
+    }
+    triggerPenalty();
+  }
+}
+
+function triggerPenalty(){
+  state.penaltyActive = true;
+  state.penaltyTasksLeft = 3;
+
+  // Real loss: streak reset, XP loss, gold loss, AND a visible rank demotion.
+  state.streak = 0;
+  const xpLoss = Math.round(30 + state.level*2);
+  const goldLoss = Math.round(state.gold * 0.15);
+  state.xp = Math.max(0, state.xp - xpLoss);
+  state.gold = Math.max(0, state.gold - goldLoss);
+
+  const rankIdx = RANKS.indexOf(state.rank);
+  let demoted = false;
+  if(rankIdx > 0){
+    state.rank = RANKS[rankIdx-1];
+    demoted = true;
+  }
+  state._lastPenaltyLoss = { xpLoss, goldLoss, demoted };
+  save();
+  renderPenaltyZone();
+  if(demoted){
+    setTimeout(()=> showRankModal(state.rank, false), 400);
+  }
+}
+
+function renderPenaltyZone(){
+  let zone = document.getElementById('penalty-zone');
+  if(!state.penaltyActive){ if(zone) zone.remove(); return; }
+  if(!zone){ zone = document.createElement('div'); zone.id = 'penalty-zone'; document.body.appendChild(zone); }
+  const loss = state._lastPenaltyLoss || {xpLoss:0, goldLoss:0, demoted:false};
+  zone.innerHTML = `
+    <h1>⚠ PENALTY ZONE ⚠</h1>
+    <p>You failed to clear yesterday's Daily Quest. The System does not forgive inaction.</p>
+    <div class="loss-list">
+      <div>− Rank ${loss.demoted ? 'demoted to '+state.rank : '(already lowest)'}</div>
+      <div>− ${loss.xpLoss} XP</div>
+      <div>− ${loss.goldLoss} Gold</div>
+      <div>− Streak reset to 0</div>
+    </div>
+    <div style="font-family:var(--mono); font-size:14px; color:#fff; margin-bottom:6px;">24 Burpees Required</div>
+    <div style="font-family:var(--mono); font-size:13px; color:var(--danger); margin-bottom:24px;">Remaining: <span id="penalty-count">${state.penaltyTasksLeft}</span> sets of 8</div>
+    <button class="btn full" style="border-color:var(--danger); color:var(--danger); max-width:240px;" id="penalty-do">Complete Set (8 reps)</button>
+  `;
+  zone.querySelector('#penalty-do').addEventListener('click', ()=>{
+    state.penaltyTasksLeft--;
+    if(state.penaltyTasksLeft <= 0){
+      state.penaltyActive = false;
+      state.penaltiesServed = (state.penaltiesServed||0) + 1;
+      toast('<b>PENALTY CLEARED</b><br>Access restored.');
+      save();
+      checkAchievements();
+      zone.remove();
+      renderAll();
+    } else {
+      document.getElementById('penalty-count').textContent = state.penaltyTasksLeft;
+      save();
+    }
+  });
+}
+
+/* ======================= BOSS ARENA ======================= */
+function isBossUnlocked(boss){
+  return boss.requirements.every(r=>r.check(state));
+}
+function isBossDefeated(bossId){
+  return state.defeatedBosses.includes(bossId);
+}
+function isBossAvailableNow(boss){
+  // A boss can only be challenged once you've actually reached (or passed) its rank tier,
+  // and the previous boss in the chain has been defeated — keeps the chain sequential.
+  const idx = BOSSES.findIndex(b=>b.id===boss.id);
+  if(idx === 0) return true;
+  return isBossDefeated(BOSSES[idx-1].id);
+}
+
+function startBossFight(bossId){
+  const boss = BOSSES.find(b=>b.id===bossId);
+  if(!boss) return;
+  // Student role has no running quest item, so substitute any "Run" requirement with an
+  // equivalent study task (roughly 7 minutes of study per km) — keeps every boss winnable
+  // regardless of role instead of leaving Student users permanently stuck on a Run task.
+  const isStudent = !ROLE_CONFIG[currentRole()].hasRun;
+  const quest = boss.quest.map(q=>{
+    if(isStudent && q.name === 'Run'){
+      return { id:q.id, name:'Study Session', target: Math.max(10, Math.round(q.target*7)), unit:'min', done:false };
+    }
+    return {...q, done:false};
+  });
+  state.activeBossFight = { bossId, quest };
+  save();
+  renderBossArena();
+  toast(`<b>BOSS FIGHT BEGUN</b><br>${boss.name} awaits.`);
+}
+function cancelBossFight(){
+  state.activeBossFight = null;
+  save();
+  renderBossArena();
+}
+function toggleBossQuestItem(idx){
+  if(!state.activeBossFight) return;
+  state.activeBossFight.quest[idx].done = !state.activeBossFight.quest[idx].done;
+  save();
+  renderBossArena();
+}
+
+// Auto-credits an active boss fight's matching quest item when the player logs that
+// kind of activity anywhere in the app (daily quest, custom log, focus timer), so the
+// fight feels connected to everything you do rather than a separate isolated checklist.
+function creditBossProgress(activityName, amount){
+  if(!state.activeBossFight) return;
+  let changed = false;
+  state.activeBossFight.quest.forEach(q=>{
+    if(q.done) return;
+    const matches =
+      (activityName==='Push-ups' && q.name==='Push-ups') ||
+      (activityName==='Sit-ups' && q.name==='Sit-ups') ||
+      (activityName==='Squats' && q.name==='Squats') ||
+      (activityName==='Running (km)' && q.name==='Run') ||
+      (activityName==='Reading (pages)' && q.name==='Read') ||
+      (activityName==='Study Session' && q.name==='Study Session') ||
+      (activityName==='Focus session' && (q.name==='Focus session' || q.name==='Study Session'));
+    if(matches && amount >= q.target){ q.done = true; changed = true; }
+  });
+  if(changed){ save(); toast('<b>BOSS PROGRESS</b><br>A finishing-blow task was completed.'); }
+}
+
+function finishBossFight(){
+  if(!state.activeBossFight) return;
+  const boss = BOSSES.find(b=>b.id===state.activeBossFight.bossId);
+  const allDone = state.activeBossFight.quest.every(q=>q.done);
+  if(!allDone) return;
+
+  state.defeatedBosses.push(boss.id);
+  state.activeBossFight = null;
+
+  const xpGain = applyXpBonus(boss.reward.xp);
+  const goldGain = applyGoldBonus(boss.reward.gold);
+  addXP(xpGain);
+  state.gold += goldGain;
+  Object.keys(state.stats).forEach(k=> state.stats[k] += boss.reward.statAll);
+
+  // Defeating the gatekeeper of a rank is what promotes you into the next rank,
+  // not just hitting a level number — mirrors the anime's gated dungeon structure.
+  const rankIdx = RANKS.indexOf(boss.rank);
+  if(rankIdx < RANKS.length-1 && RANKS.indexOf(state.rank) <= rankIdx){
+    state.rank = RANKS[rankIdx+1];
+  }
+
+  save();
+  checkAchievements();
+  showBossVictoryModal(boss, xpGain, goldGain);
+}
+
+/* ======================= SHARE PROGRESS (canvas card + Web Share API) ======================= */
+// Renders a System-themed image card entirely on-device (canvas), then hands it to the
+// native share sheet via the Web Share API — no server, no account, no data leaves the
+// device except the image the user explicitly chooses to share. Falls back to a plain
+// download if the browser/OS doesn't support sharing image files directly.
+const SHARE_RANK_COLORS = { E:'#6b7a9e', D:'#c98a4b', C:'#5b8cff', B:'#a78bfa', A:'#ff5b8c', S:'#f4d35e' };
+
+function drawShareCardBase(ctx, w, h, accentColor){
+  // Void background with a faint radial glow, matching the app's body background.
+  const bgGrad = ctx.createRadialGradient(w/2, h*0.25, 40, w/2, h*0.25, w*0.8);
+  bgGrad.addColorStop(0, '#0d1730');
+  bgGrad.addColorStop(1, '#070a12');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Faint grid texture, echoing .bg-grid
+  ctx.strokeStyle = 'rgba(91,140,255,0.05)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<w; x+=36){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0; y<h; y+=36){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+
+  // Outer panel border with bracket corner-ticks, the app's signature "System Window" motif.
+  const pad = 50;
+  ctx.strokeStyle = '#1c2842';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(pad, pad, w-pad*2, h-pad*2);
+
+  const tick = 36;
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'square';
+  // top-left
+  ctx.beginPath(); ctx.moveTo(pad, pad+tick); ctx.lineTo(pad, pad); ctx.lineTo(pad+tick, pad); ctx.stroke();
+  // top-right
+  ctx.beginPath(); ctx.moveTo(w-pad-tick, pad); ctx.lineTo(w-pad, pad); ctx.lineTo(w-pad, pad+tick); ctx.stroke();
+  // bottom-left
+  ctx.beginPath(); ctx.moveTo(pad, h-pad-tick); ctx.lineTo(pad, h-pad); ctx.lineTo(pad+tick, h-pad); ctx.stroke();
+  // bottom-right
+  ctx.beginPath(); ctx.moveTo(w-pad-tick, h-pad); ctx.lineTo(w-pad, h-pad); ctx.lineTo(w-pad, h-pad-tick); ctx.stroke();
+}
+
+function drawShareCardFooter(ctx, w, h){
+  ctx.font = '500 22px "JetBrains Mono", monospace';
+  ctx.fillStyle = 'rgba(199,211,238,0.45)';
+  ctx.textAlign = 'center';
+  ctx.fillText('THE SYSTEM  ·  made by dev4vr4th & Claude', w/2, h-80);
+}
+
+// Builds a boss-victory share card. Returns a canvas element.
+function buildBossShareCard(boss){
+  const w = 1080, h = 1350;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const accent = boss.color;
+
+  drawShareCardBase(ctx, w, h, accent);
+
+  ctx.textAlign = 'center';
+  ctx.font = '600 30px "JetBrains Mono", monospace';
+  ctx.fillStyle = accent;
+  ctx.fillText('BOSS DEFEATED', w/2, 260);
+
+  ctx.font = '800 90px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = accent; ctx.shadowBlur = 40;
+  ctx.fillText(boss.icon, w/2, 420);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '700 56px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#c7d3ee';
+  wrapCanvasText(ctx, boss.name, w/2, 540, w-200, 64);
+
+  ctx.font = '400 30px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText(`"${boss.reward.title}" title earned`, w/2, 660);
+
+  ctx.font = '600 34px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#e8b93f';
+  ctx.fillText(`+${boss.reward.xp} XP   ·   +${boss.reward.gold} Gold`, w/2, 740);
+
+  // Hunter identity strip
+  ctx.font = '500 26px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText(`${state.profile.name}  ·  Rank ${state.rank}  ·  LV ${state.level}`, w/2, 980);
+
+  drawShareCardFooter(ctx, w, h);
+  return canvas;
+}
+
+// Builds a general "current stats" share card. Returns a canvas element.
+function buildStatsShareCard(){
+  const w = 1080, h = 1350;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const accent = SHARE_RANK_COLORS[state.rank] || '#5b8cff';
+
+  drawShareCardBase(ctx, w, h, accent);
+
+  ctx.textAlign = 'center';
+  ctx.font = '600 28px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText('HUNTER STATUS', w/2, 220);
+
+  // Rank badge (octagon-ish bracket, echoing .rank-badge)
+  ctx.font = '800 130px "JetBrains Mono", monospace';
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accent; ctx.shadowBlur = 50;
+  ctx.fillText(state.rank, w/2, 410);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '700 40px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#c7d3ee';
+  ctx.fillText(RANK_TITLES[state.rank], w/2, 480);
+
+  ctx.font = '500 32px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText(`LV ${state.level}  ·  ${state.profile.name}`, w/2, 540);
+
+  // Stat grid (2x2), echoing .stat-box
+  const stats = [
+    {k:'STR', label:'Strength'}, {k:'AGI', label:'Agility'},
+    {k:'VIT', label:'Vitality'}, {k:'SEN', label:'Sense'}
+  ];
+  const gridTop = 640, boxW = 420, boxH = 160, gapX = 40, gapY = 30;
+  const gridLeft = w/2 - boxW - gapX/2;
+  stats.forEach((s, i)=>{
+    const col = i % 2, row = Math.floor(i/2);
+    const x = gridLeft + col*(boxW+gapX);
+    const y = gridTop + row*(boxH+gapY);
+    ctx.strokeStyle = '#1c2842';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, boxW, boxH);
+    ctx.textAlign = 'left';
+    ctx.font = '500 22px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#6b7a9e';
+    ctx.fillText(s.label.toUpperCase(), x+24, y+44);
+    ctx.font = '700 56px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#c7d3ee';
+    ctx.fillText(String(state.stats[s.k]), x+24, y+108);
+    ctx.textAlign = 'center';
+  });
+
+  ctx.font = '500 26px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText(`${state.defeatedBosses.length} Bosses Defeated  ·  ${state.questsCleared} Quests Cleared`, w/2, gridTop + 2*(boxH+gapY) + 50);
+
+  drawShareCardFooter(ctx, w, h);
+  return canvas;
+}
+
+// Simple word-wrap helper for canvas text (canvas has no native text wrapping).
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(' ');
+  let line = '';
+  let lines = [];
+  for(const word of words){
+    const test = line ? line + ' ' + word : word;
+    if(ctx.measureText(test).width > maxWidth && line){
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if(line) lines.push(line);
+  const startY = y - (lines.length-1)*lineHeight/2;
+  lines.forEach((l, i)=> ctx.fillText(l, x, startY + i*lineHeight));
+}
+
+// Takes a canvas, converts it to a PNG file, and hands it to the native share sheet.
+// Falls back to a plain image download if Web Share (with files) isn't supported —
+// covers desktop browsers and older devices without leaving the user stuck.
+function shareCanvasCard(canvas, shareTitle, shareText){
+  canvas.toBlob(async (blob)=>{
+    if(!blob){ toast('Could not generate share image', 'danger'); return; }
+    const file = new File([blob], 'the-system-progress.png', { type: 'image/png' });
+    const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+
+    if(navigator.share && canShareFiles){
+      try{
+        await navigator.share({ files: [file], title: shareTitle, text: shareText });
+      }catch(err){ /* user cancelled the share sheet — not an error */ }
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'the-system-progress.png';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Sharing not supported here — image downloaded instead', 'gold');
+    }
+  }, 'image/png');
+}
+
+// Waits for the JetBrains Mono web font to finish loading before drawing canvas text —
+// canvas doesn't wait for fonts automatically, so without this a share card could render
+// in a generic fallback font if triggered very soon after page load.
+function whenFontsReady(callback){
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(callback).catch(callback);
+  } else {
+    callback();
+  }
+}
+
+function shareBossVictory(boss){
+  whenFontsReady(()=>{
+    const canvas = buildBossShareCard(boss);
+    shareCanvasCard(canvas, 'THE SYSTEM', `I just defeated ${boss.name} in real life. Arise.`);
+  });
+}
+function shareCurrentStats(){
+  whenFontsReady(()=>{
+    const canvas = buildStatsShareCard();
+    shareCanvasCard(canvas, 'THE SYSTEM', `Rank ${state.rank} · Level ${state.level}. Building myself one quest at a time.`);
+  });
+}
+
+function showBossVictoryModal(boss, xpGain, goldGain){
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.id = 'boss-defeat-modal';
+  bg.innerHTML = `
+    <div class="rankup-card" style="--rk:${boss.color}">
+      <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="boss-victory-icon">${boss.icon}</div>
+      <div class="rankup-eyebrow">Boss Defeated</div>
+      <div class="rankup-rank" style="font-size:26px;">${boss.name}</div>
+      <div class="rankup-name">"${boss.reward.title}" title earned</div>
+      <div style="font-family:var(--mono); font-size:12px; color:var(--gold); margin-bottom:18px;">+${xpGain} XP · +${goldGain} Gold · +${boss.reward.statAll} all stats</div>
+      <button class="btn primary full" id="bossmodal-share" style="margin-bottom:8px;">Share Victory</button>
+      <button class="btn full" id="bossmodal-close">Continue</button>
+    </div>`;
+  document.body.appendChild(bg);
+  document.getElementById('bossmodal-share').addEventListener('click', ()=> shareBossVictory(boss));
+  document.getElementById('bossmodal-close').addEventListener('click', ()=>{ bg.remove(); renderAll(); });
+}
+
+function renderBossArena(){
+  const list = document.getElementById('boss-list');
+  if(!list) return;
+  list.innerHTML = BOSSES.map(boss=>{
+    const defeated = isBossDefeated(boss.id);
+    const availableNow = isBossAvailableNow(boss);
+    const unlocked = availableNow && isBossUnlocked(boss);
+    const isFighting = state.activeBossFight && state.activeBossFight.bossId === boss.id;
+
+    let bodyHtml = '';
+    if(defeated){
+      bodyHtml = `
+        <div class="boss-defeated-tag">Defeated — "${boss.reward.title}"</div>
+        <div class="boss-reward-row">Earned +${boss.reward.xp} XP · +${boss.reward.gold} Gold · +${boss.reward.statAll} all stats</div>`;
+    } else if(!availableNow){
+      bodyHtml = `<div class="boss-section-label">Locked</div><div style="font-size:12px; color:var(--ink-faint);">Defeat the previous Rank's boss first.</div>`;
+    } else if(isFighting){
+      const fightItems = state.activeBossFight.quest.map((q,idx)=>`
+        <div class="boss-quest-item">
+          <div class="q-check ${q.done?'done':''}" data-bossq="${idx}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div class="q-name ${q.done?'done':''}" style="flex:1;">${q.name}</div>
+          <div class="q-target">${q.target} ${q.unit}</div>
+        </div>`).join('');
+      const allDone = state.activeBossFight.quest.every(q=>q.done);
+      bodyHtml = `
+        <div class="boss-section-label">Finishing Blow — Complete to Win</div>
+        ${fightItems}
+        <button class="boss-cta" data-finish="${boss.id}" style="--bc:${boss.color}" ${allDone?'':'disabled'}>${allDone?'Deliver Finishing Blow':'Complete All Tasks'}</button>
+        <button class="btn full" data-cancel="${boss.id}" style="margin-top:8px;">Retreat</button>
+      `;
+    } else if(unlocked){
+      const reqHtml = boss.requirements.map(r=>`<div class="req-row"><span>${r.label}</span><span class="rv met">✓</span></div>`).join('');
+      bodyHtml = `
+        <div class="boss-section-label">Requirements Met</div>
+        ${reqHtml}
+        <button class="boss-cta" data-challenge="${boss.id}" style="--bc:${boss.color}">Challenge ${boss.name}</button>
+      `;
+    } else {
+      const reqHtml = boss.requirements.map(r=>{
+        const met = r.check(state);
+        return `<div class="req-row"><span>${r.label}</span><span class="rv ${met?'met':'unmet'}">${met?'✓':'✗'}</span></div>`;
+      }).join('');
+      bodyHtml = `
+        <div class="boss-section-label">Requirements to Unlock</div>
+        ${reqHtml}
+        <button class="boss-cta" disabled style="--bc:${boss.color}">Not Ready</button>
+      `;
+    }
+
+    return `
+      <div class="boss-card ${!unlocked && !defeated ? 'locked':''} ${defeated?'defeated':''}">
+        <div class="boss-banner" style="--bc:${boss.color}">
+          <div class="boss-rank-tag" style="--bc:${boss.color}">Rank ${boss.rank} Gatekeeper</div>
+          <div class="boss-name">${boss.icon} ${boss.name}</div>
+          <div class="boss-epithet">${boss.epithet}</div>
+        </div>
+        <div class="boss-body">${bodyHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('[data-challenge]').forEach(btn=> btn.addEventListener('click', ()=> startBossFight(btn.dataset.challenge)));
+  list.querySelectorAll('[data-cancel]').forEach(btn=> btn.addEventListener('click', cancelBossFight));
+  list.querySelectorAll('[data-finish]').forEach(btn=> btn.addEventListener('click', finishBossFight));
+  list.querySelectorAll('[data-bossq]').forEach(el=> el.addEventListener('click', ()=> toggleBossQuestItem(parseInt(el.dataset.bossq))));
+}
+
+/* ======================= STAT RENDER ======================= */
+const STAT_META = { STR:{label:'Strength'}, AGI:{label:'Agility'}, VIT:{label:'Vitality'}, SEN:{label:'Sense'} };
+function renderStats(){
+  const grid = document.getElementById('stat-grid');
+  grid.innerHTML = '';
+  Object.entries(state.stats).forEach(([k,v])=>{
+    const meta = STAT_META[k];
+    const cap = getStatCap(k);
+    const pct = clamp(v/cap*100, 2, 100);
+    const box = document.createElement('div');
+    box.className = 'stat-box';
+    box.innerHTML = `<div class="sn">${meta.label}</div><div class="sv">${v}<span style="font-size:11px; color:var(--ink-faint);"> / ${cap}</span></div><div class="stat-bar"><i style="width:${pct}%"></i></div>`;
+    grid.appendChild(box);
+  });
+}
+
+/* ======================= WORKOUT GENERATOR (health-aware split) ======================= */
+// 7-day cycle: Mon/Tue upper-lower split, Wed full body, Thu light/recovery,
+// Fri/Sat upper-lower, Sun full rest. This avoids daily max-intensity training,
+// which raises injury and burnout risk versus a split with built-in recovery.
+// Each day-type has a larger exercise pool than fits on screen — "Regenerate Split"
+// reshuffles which exercises from that pool are shown, so the button visibly does
+// something, while staying correct for what today's recovery schedule calls for.
+const SPLITS = {
+  bodyweight:{
+    upper:["Push-ups 4x15","Pike Push-ups 3x10","Diamond Push-ups 3x12","Plank 3x60s","Tricep Dips 3x15","Incline Push-ups 3x15","Shoulder Taps 3x20","Wall Push-ups 3x20"],
+    lower:["Squats 4x20","Lunges 3x12/leg","Glute Bridges 3x20","Wall Sit 3x45s","Calf Raises 4x20","Step-ups 3x12/leg","Bulgarian Split Squats 3x10/leg","Donkey Kicks 3x15/leg"],
+    full:["Burpees 4x12","Mountain Climbers 4x30s","Jump Squats 3x15","Push-up to Plank 3x10","Star Jumps 3x20","Bear Crawls 3x30s","High Knees 3x30s","Plank Jacks 3x20"],
+    light:["Light Walk 20min","Stretching Routine 15min","Mobility Flow 10min","Easy Yoga Flow 15min","Foam Rolling 10min"]
+  },
+  weighted:{
+    upper:["Bench Press 4x8","Overhead Press 3x10","Rows 4x10","Lat Pulldown 3x12","Bicep Curls 3x12","Incline Dumbbell Press 3x10","Face Pulls 3x15","Tricep Pushdowns 3x12"],
+    lower:["Back Squat 4x8","Romanian Deadlift 3x10","Leg Press 3x12","Walking Lunges 3x12","Calf Raises 4x15","Leg Curls 3x12","Hip Thrusts 3x12","Goblet Squats 3x15"],
+    full:["Deadlift 4x6","Pull-ups 4x8","Dumbbell Thrusters 3x12","Kettlebell Swings 3x15","Farmer Carries 3x40m","Clean and Press 3x8","Renegade Rows 3x10","Box Step-ups 3x12"],
+    light:["Light Cycling 20min","Foam Rolling 15min","Mobility Flow 10min","Easy Row 15min","Recovery Walk 20min"]
+  }
+};
+
+// How many exercises to show at once from the pool (keeps the card a manageable length).
+const SPLIT_DISPLAY_COUNT = 5;
+
+function pickRandomExercises(pool, count){
+  const shuffled = pool.slice().sort(()=>Math.random()-0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
+function renderSplit(){
+  const now = new Date();
+  const hasWeights = state.profile.equipment.some(e=>['dumbbells','barbell','fullgym'].includes(e));
+  const pool = hasWeights ? SPLITS.weighted : SPLITS.bodyweight;
+
+  if(isRestDay(now)){
+    document.getElementById('split-content').innerHTML = `
+      <div style="font-family:var(--mono); font-size:11px; color:var(--good); text-transform:uppercase; letter-spacing:.1em; margin-bottom:10px;">Full Rest Day</div>
+      <div style="font-size:13px; color:var(--ink); line-height:1.6;">No training scheduled. Sleep, hydrate, and let adaptation happen — this is when the actual gains lock in.</div>`;
+    return;
+  }
+  const dayType = isLightDay(now) ? 'light' : ['upper','lower','full','upper'][now.getDay()%4];
+  const fullPool = pool[dayType];
+  const exercises = pickRandomExercises(fullPool, dayType==='light' ? 3 : SPLIT_DISPLAY_COUNT);
+  const labels = {upper:'Upper Body',lower:'Lower Body',full:'Full Body',light:'Active Recovery'};
+  document.getElementById('split-content').innerHTML = `
+    <div style="font-family:var(--mono); font-size:11px; color:var(--violet); text-transform:uppercase; letter-spacing:.1em; margin-bottom:10px;">${labels[dayType]} Protocol</div>
+    ${exercises.map(e=>`<div style="font-size:13px; padding:7px 0; border-bottom:1px solid var(--line); color:var(--ink);">${e}</div>`).join('')}
+  `;
+}
+document.getElementById('regen-split').addEventListener('click', renderSplit);
+
+/* ======================= LOGGING (Train tab) ======================= */
+// Per-activity config: drives the form's input label, whether "Sets" makes sense at all
+// (distance/time/page activities don't have "sets"), and the sanity ceiling on the total.
+// One source of truth instead of scattered if/else chains on activity name.
+const LOG_ACTIVITY_META = {
+  'Push-ups':              { label:'Reps',      hasSets:true,  cap:150 },
+  'Sit-ups':                { label:'Reps',      hasSets:true,  cap:150 },
+  'Squats':                 { label:'Reps',      hasSets:true,  cap:150 },
+  'Pull-ups':                { label:'Reps',      hasSets:true,  cap:60  },
+  'Running (km)':            { label:'Distance (km)', hasSets:false, cap:25  },
+  'Bench Press':             { label:'Reps',      hasSets:true,  cap:250 },
+  'Deadlift':                { label:'Reps',      hasSets:true,  cap:300 },
+  'Reading (pages)':         { label:'Pages',     hasSets:false, cap:150 },
+  'Study Session (min)':     { label:'Minutes',   hasSets:false, cap:180 },
+  'Custom Strength Session': { label:'Reps',      hasSets:true,  cap:200 },
+  'Custom Cardio Session':   { label:'Minutes',   hasSets:false, cap:200 },
+};
+const LOG_MAX_SETS = 15;
+
+function syncLogFormForActivity(){
+  const activity = document.getElementById('log-activity').value;
+  const meta = LOG_ACTIVITY_META[activity] || { label:'Amount', hasSets:true };
+  document.getElementById('log-amount-label').textContent = meta.label;
+  document.getElementById('log-sets-field').style.display = meta.hasSets ? 'block' : 'none';
+}
+document.getElementById('log-activity').addEventListener('change', syncLogFormForActivity);
+
+document.getElementById('log-submit').addEventListener('click', ()=>{
+  const activity = document.getElementById('log-activity').value;
+  const meta = LOG_ACTIVITY_META[activity] || { hasSets:true, cap:150 };
+  let amount = parseFloat(document.getElementById('log-amount').value) || 0;
+  let sets = meta.hasSets ? (parseFloat(document.getElementById('log-sets').value) || 1) : 1;
+  if(amount <= 0){ toast('Enter a valid amount', 'danger'); return; }
+
+  sets = clamp(sets, 1, LOG_MAX_SETS);
+  let total = amount * sets;
+  const cap = meta.cap || 150;
+  if(total > cap){
+    total = cap;
+    toast(`Capped to a realistic max for ${activity} (${cap})`, 'danger');
+  }
+
+  const baseXp = Math.round(total * (activity.includes('Running')?8:1));
+  const xpGain = applyXpBonus(baseXp);
+  const baseGold = Math.round(baseXp/3);
+  const goldGain = applyGoldBonus(baseGold);
+  state.history.push({date:todayStr(), type:activity, amount:total});
+
+  // Custom logging gives a small stat nudge, but only once per activity per day —
+  // otherwise someone could log the same set 50 times to inflate a stat in one sitting.
+  const todayKey = todayStr();
+  state.customLogStatDate = state.customLogStatDate || {};
+  if(state.customLogStatDate[activity] !== todayKey){
+    state.customLogStatDate[activity] = todayKey;
+    if(['Bench Press','Push-ups','Pull-ups','Deadlift'].includes(activity)) state.stats.STR = Math.min(state.stats.STR+1, getStatCap('STR'));
+    if(['Squats','Deadlift'].includes(activity)) state.stats.VIT = Math.min(state.stats.VIT+1, getStatCap('VIT'));
+    if(activity.includes('Running')) state.stats.AGI = Math.min(state.stats.AGI+1, getStatCap('AGI'));
+    if(activity.includes('Reading')) state.stats.SEN = Math.min(state.stats.SEN+1, getStatCap('SEN'));
+    if(activity.includes('Study Session')) state.stats.SEN = Math.min(state.stats.SEN+1, getStatCap('SEN'));
+    if(activity.includes('Custom')) state.stats.SEN = Math.min(state.stats.SEN+1, getStatCap('SEN'));
+  }
+
+  if(activity==='Push-ups') state.totalPushups += total;
+  if(activity==='Sit-ups') state.totalSitups += total;
+  if(activity==='Squats') state.totalSquats += total;
+  if(activity==='Running (km)') state.totalRunKm += total;
+  if(activity==='Reading (pages)') state.totalPagesRead += total;
+  // Boss quest items use the plain name "Study Session" (no unit suffix) — translate
+  // the dropdown's "Study Session (min)" label to match before crediting.
+  creditBossProgress(activity === 'Study Session (min)' ? 'Study Session' : activity, total);
+
+  const grantedXp = addXPCapped(xpGain);
+  const grantedGold = addGoldCapped(goldGain);
+  save();
+  toast(`<b>LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`);
+  document.getElementById('log-amount').value = '';
+  document.getElementById('log-sets').value = '';
+  checkAchievements();
+  renderAll();
+});
+
+/* ======================= CUSTOM WORKOUT BUILDER ======================= */
+function addExerciseRow(name, sets){
+  const wrap = document.createElement('div');
+  wrap.className = 'exercise-row';
+  wrap.innerHTML = `
+    <input class="ex-name" type="text" placeholder="Exercise name" value="${name||''}">
+    <input class="ex-sets" type="text" placeholder="3x12" value="${sets||''}">
+    <span class="ex-del">✕</span>
+  `;
+  wrap.querySelector('.ex-del').addEventListener('click', ()=> wrap.remove());
+  document.getElementById('cr-exercise-rows').appendChild(wrap);
+}
+document.getElementById('cr-add-exercise').addEventListener('click', ()=> addExerciseRow());
+
+document.getElementById('cr-save').addEventListener('click', ()=>{
+  const name = document.getElementById('cr-name').value.trim();
+  const rows = Array.from(document.querySelectorAll('#cr-exercise-rows .exercise-row'));
+  const exercises = rows.map(r=>({
+    name: r.querySelector('.ex-name').value.trim(),
+    sets: r.querySelector('.ex-sets').value.trim()
+  })).filter(e=>e.name);
+
+  if(!name || exercises.length===0){ toast('Add a name and at least one exercise', 'danger'); return; }
+
+  state.customRoutines.push({id:'routine_'+Date.now(), name, exercises});
+  save();
+  document.getElementById('cr-name').value = '';
+  document.getElementById('cr-exercise-rows').innerHTML = '';
+  addExerciseRow();
+  toast(`<b>ROUTINE SAVED</b><br>${name}`);
+  checkAchievements();
+  renderCustomRoutines();
+});
+
+function renderCustomRoutines(){
+  const wrap = document.getElementById('custom-routines-list');
+  if(state.customRoutines.length === 0){
+    wrap.innerHTML = `<div class="empty-note">No custom routines yet. Build one below.</div>`;
+    return;
+  }
+  wrap.innerHTML = state.customRoutines.map(r=>`
+    <div class="saved-routine">
+      <div class="rname">${r.name}</div>
+      <div class="rex">${r.exercises.map(e=>`${e.name}${e.sets?' — '+e.sets:''}`).join('<br>')}</div>
+      <div class="ractions">
+        <button class="btn full" data-do="log" data-id="${r.id}" style="font-size:10px;">Log as Today's Workout</button>
+        <button class="btn full" data-do="delete" data-id="${r.id}" style="font-size:10px; border-color:var(--danger); color:var(--danger);">Delete</button>
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('[data-do="delete"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      state.customRoutines = state.customRoutines.filter(r=>r.id !== btn.dataset.id);
+      save();
+      renderCustomRoutines();
+    });
+  });
+  wrap.querySelectorAll('[data-do="log"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const r = state.customRoutines.find(x=>x.id===btn.dataset.id);
+      const today = todayStr();
+      state.customLogStatDate = state.customLogStatDate || {};
+      const routineKey = 'routine:'+r.id;
+      if(state.customLogStatDate[routineKey] === today){
+        toast('Already logged this routine today', 'danger');
+        return;
+      }
+      state.customLogStatDate[routineKey] = today;
+
+      const baseXp = 40 + r.exercises.length*8;
+      const xpGain = applyXpBonus(baseXp);
+      const goldGain = applyGoldBonus(Math.round(baseXp/3));
+      state.history.push({date:today, type:'Custom: '+r.name, amount:r.exercises.length});
+      state.stats.STR = Math.min(state.stats.STR+1, getStatCap('STR'));
+      state.stats.VIT = Math.min(state.stats.VIT+1, getStatCap('VIT'));
+      const grantedXp = addXPCapped(xpGain);
+      const grantedGold = addGoldCapped(goldGain);
+      save();
+      toast(`<b>WORKOUT LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`);
+      checkAchievements();
+      renderAll();
+    });
+  });
+}
+
+/* ======================= STRENGTH PERCENTILE ======================= */
+function percentile(lift, value, bw){
+  if(!value || !bw) return null;
+  if(lift === 'pullups'){
+    const thresholds = [1,3,6,10,15,20];
+    for(let i=thresholds.length-1;i>=0;i--){ if(value>=thresholds[i]) return [10,30,50,70,90,97][i]; }
+    return 5;
+  }
+  const ratio = value/bw;
+  const tables = { bench:[0.5,0.75,1.0,1.25,1.5,1.75], squat:[0.75,1.0,1.5,1.75,2.0,2.25], deadlift:[1.0,1.25,1.75,2.0,2.25,2.5] };
+  const arr = tables[lift];
+  if(!arr) return null;
+  for(let i=arr.length-1;i>=0;i--){ if(ratio>=arr[i]) return [10,30,50,70,90,97][i]; }
+  return 5;
+}
+function renderLifts(){
+  const bw = state.profile.weight || 70;
+  const liftDefs = [
+    {key:'bench', label:'Bench Press', unit:'kg'}, {key:'squat', label:'Back Squat', unit:'kg'},
+    {key:'deadlift', label:'Deadlift', unit:'kg'}, {key:'pullups', label:'Pull-ups (max reps)', unit:'reps'}
+  ];
+  const list = document.getElementById('lift-list');
+  list.innerHTML = liftDefs.map(d=>{
+    const val = state.lifts[d.key] || 0;
+    const pct = d.key==='pullups' ? percentile('pullups', val) : percentile(d.key, val, bw);
+    return `<div class="lift-row"><div class="lift-name">${d.label}</div><input type="number" class="lift-input" data-key="${d.key}" value="${val||''}" placeholder="${d.unit}"><div class="lift-pct">${pct!==null?pct+'th pct':'—'}</div></div>`;
+  }).join('');
+  list.querySelectorAll('.lift-input').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      state.lifts[inp.dataset.key] = parseFloat(inp.value) || 0;
+      save();
+      checkAchievements();
+      renderLifts();
+    });
+  });
+}
+
+/* ======================= STORE ======================= */
+function renderStore(){
+  document.getElementById('store-gold').textContent = state.gold;
+  const grid = document.getElementById('store-grid');
+  grid.innerHTML = STORE_ITEMS.map(item=>{
+    const owned = state.inventory.includes(item.id);
+    const equipped = state.equipped[item.slot] === item.id;
+    const isOneTime = item.bonus.type === 'statCap' || item.bonus.type === 'statCapAll';
+    let btnLabel = isOneTime ? (owned ? 'Acquired' : 'Buy') : (equipped ? 'Equipped' : owned ? 'Equip' : 'Buy');
+    let btnDisabled = isOneTime && owned;
+    return `
+      <div class="item-card ${owned?'owned':''} ${equipped?'equipped':''}">
+        <div class="icon">${item.icon}</div>
+        <div class="iname">${item.name}</div>
+        <div class="irank">Rank ${item.rank}</div>
+        <div class="ibonus">${item.bonusLabel}</div>
+        <div class="price">◆ ${item.price}</div>
+        <button data-id="${item.id}" ${btnDisabled?'disabled':''}>${btnLabel}</button>
+      </div>
+    `;
+  }).join('');
+  grid.querySelectorAll('button:not([disabled])').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      const item = STORE_ITEMS.find(i=>i.id===id);
+      const owned = state.inventory.includes(id);
+      if(!owned){
+        if(state.gold < item.price){ toast('Not enough gold', 'danger'); return; }
+        state.gold -= item.price;
+        state.inventory.push(id);
+        if(item.bonus.type === 'statCap'){
+          state.statCapBonusPerStat = state.statCapBonusPerStat || {};
+          state.statCapBonusPerStat[item.bonus.stat] = (state.statCapBonusPerStat[item.bonus.stat]||0) + item.bonus.value;
+          toast(`<b>ITEM ACQUIRED</b><br>${item.name} — ${item.bonusLabel}`);
+        } else if(item.bonus.type === 'statCapAll'){
+          state.statCapBonusAll = (state.statCapBonusAll||0) + item.bonus.value;
+          toast(`<b>ITEM ACQUIRED</b><br>${item.name} — ${item.bonusLabel}`);
+        } else {
+          toast(`<b>ITEM ACQUIRED</b><br>${item.name}`);
+        }
+      }
+      if(item.bonus.type !== 'statCap' && item.bonus.type !== 'statCapAll'){
+        state.equipped[item.slot] = id;
+      }
+      save();
+      checkAchievements();
+      renderStore();
+      renderHud();
+      renderStats();
+    });
+  });
+}
+
+/* ======================= FOCUS TIMER ======================= */
+let timerInterval = null;
+let timerSecondsLeft = 25*60;
+let timerTotalSeconds = 25*60;
+let timerRunning = false;
+const CIRC = 2*Math.PI*88;
+
+document.querySelectorAll('#timer-presets .preset-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#timer-presets .preset-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    const customField = document.getElementById('timer-custom-field');
+    if(chip.dataset.custom){
+      customField.style.display = 'block';
+    } else {
+      customField.style.display = 'none';
+      const min = parseInt(chip.dataset.min);
+      timerTotalSeconds = min*60;
+      timerSecondsLeft = timerTotalSeconds;
+      updateTimerDisplay();
+    }
+  });
+});
+document.getElementById('timer-custom-input').addEventListener('input', e=>{
+  const min = clamp(parseInt(e.target.value) || 0, 0, 180);
+  if(min>0){
+    timerTotalSeconds = min*60;
+    timerSecondsLeft = timerTotalSeconds;
+    updateTimerDisplay();
+  }
+});
+
+function updateTimerDisplay(){
+  const m = String(Math.floor(timerSecondsLeft/60)).padStart(2,'0');
+  const s = String(timerSecondsLeft%60).padStart(2,'0');
+  document.getElementById('timer-display').textContent = `${m}:${s}`;
+  const pct = 1 - (timerSecondsLeft/timerTotalSeconds);
+  document.getElementById('timer-progress').setAttribute('stroke-dashoffset', CIRC*pct);
+}
+
+document.getElementById('timer-start').addEventListener('click', ()=>{
+  if(timerRunning){
+    // pause
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timer-start').textContent = 'Resume Focus';
+    return;
+  }
+  timerRunning = true;
+  document.getElementById('timer-start').textContent = 'Pause';
+  document.getElementById('timer-reset').style.display = 'block';
+  document.getElementById('timer-mode-label').textContent = 'FOCUSING — STAY ON TASK';
+  timerInterval = setInterval(()=>{
+    timerSecondsLeft--;
+    updateTimerDisplay();
+    if(timerSecondsLeft <= 0){
+      clearInterval(timerInterval);
+      timerRunning = false;
+      completeFocusSession();
+    }
+  }, 1000);
+});
+document.getElementById('timer-reset').addEventListener('click', ()=>{
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerSecondsLeft = timerTotalSeconds;
+  updateTimerDisplay();
+  document.getElementById('timer-start').textContent = 'Start Focus';
+  document.getElementById('timer-mode-label').textContent = 'FOCUS SESSION';
+  document.getElementById('timer-reset').style.display = 'none';
+});
+function completeFocusSession(){
+  const minutes = Math.round(timerTotalSeconds/60);
+  state.totalFocusMinutes = (state.totalFocusMinutes||0) + minutes;
+  state.focusSessions.push({date: todayStr(), minutes});
+  const xpGain = applyXpBonus(Math.round(minutes*0.5));
+  const goldGain = applyGoldBonus(Math.round(minutes*0.2));
+  const grantedXp = addXPCapped(xpGain);
+  const grantedGold = addGoldCapped(goldGain);
+  creditBossProgress('Focus session', minutes);
+  save();
+  document.getElementById('timer-mode-label').textContent = 'SESSION COMPLETE';
+  document.getElementById('timer-start').textContent = 'Start Focus';
+  document.getElementById('timer-reset').style.display = 'none';
+  timerSecondsLeft = timerTotalSeconds;
+  updateTimerDisplay();
+  toast(`<b>FOCUS COMPLETE</b><br>${minutes} min · +${grantedXp} XP · +${grantedGold} Gold`);
+  checkAchievements();
+  renderFocusLog();
+  renderHud();
+  renderBossArena();
+}
+function renderFocusLog(){
+  const today = todayStr();
+  const todaysSessions = (state.focusSessions||[]).filter(s=>s.date===today);
+  const log = document.getElementById('focus-log');
+  if(todaysSessions.length === 0){
+    log.innerHTML = `<div class="empty-note">No focus sessions logged today.</div>`;
+  } else {
+    log.innerHTML = todaysSessions.map((s,i)=>`<div class="session-log-row"><span>Session ${i+1}</span><span>${s.minutes} min</span></div>`).join('');
+  }
+  const totalToday = todaysSessions.reduce((a,s)=>a+s.minutes,0);
+  document.getElementById('focus-total').textContent = totalToday + ' min';
+}
+
+/* ======================= ANALYTICS ======================= */
+function renderStreakRow(){
+  const row = document.getElementById('streak-row');
+  row.innerHTML = '';
+  const today = new Date();
+  const clearedSet = new Set(state.questClearDates || []);
+  for(let i=6;i>=0;i--){
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const ds = d.toISOString().slice(0,10);
+    let cls = '';
+    if(clearedSet.has(ds)) cls = 'hit';
+    else if(isRestDay(d)) cls = 'rest';
+    else if(state.failedDates && state.failedDates.includes(ds)) cls='fail';
+    const div = document.createElement('div');
+    div.className = 'streak-day '+cls;
+    div.textContent = d.toLocaleDateString('en-US',{weekday:'short'}).slice(0,2);
+    row.appendChild(div);
+  }
+}
+function renderWeeklyChart(){
+  const svg = document.getElementById('chart-weekly');
+  const today = new Date();
+  const clearedSet = new Set(state.questClearDates || []);
+  const days = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const ds = d.toISOString().slice(0,10);
+    const count = state.history.filter(h=>h.date===ds).length + (clearedSet.has(ds)?1:0);
+    days.push(count);
+  }
+  const max = Math.max(...days, 1);
+  const w = 300, h = 140, bw = w/days.length;
+  let bars = days.map((v,i)=>{
+    const bh = (v/max)*100;
+    return `<rect x="${i*bw+8}" y="${120-bh}" width="${bw-16}" height="${bh}" fill="#5b8cff" opacity="0.85" rx="2"></rect>`;
+  }).join('');
+  svg.innerHTML = bars + `<line x1="0" y1="120" x2="300" y2="120" stroke="#1c2842"/>`;
+}
+function renderStatChart(){
+  const svg = document.getElementById('chart-stats');
+  const hist = state.statHistory.slice(-14);
+  if(hist.length < 2){ svg.innerHTML = `<text x="150" y="70" fill="#3f4d6e" font-size="11" text-anchor="middle" font-family="monospace">Not enough data yet</text>`; return; }
+  const keys = ['STR','AGI','VIT','SEN'];
+  const colors = {STR:'#ff5b8c', AGI:'#3ddc97', VIT:'#5b8cff', SEN:'#e8b93f'};
+  const maxVal = Math.max(...hist.flatMap(h=>keys.map(k=>h[k])), 10);
+  const w=300,h=140, pad=10;
+  let svgContent = '';
+  keys.forEach(k=>{
+    const pts = hist.map((pt,i)=>{
+      const x = pad + (i/(hist.length-1))*(w-pad*2);
+      const y = h-10 - (pt[k]/maxVal)*(h-30);
+      return `${x},${y}`;
+    }).join(' ');
+    svgContent += `<polyline points="${pts}" fill="none" stroke="${colors[k]}" stroke-width="2"/>`;
+  });
+  svg.innerHTML = svgContent;
+}
+function renderWeightChart(){
+  const svg = document.getElementById('chart-weight');
+  const log = state.weightLog.slice(-20);
+  if(log.length < 2){ svg.innerHTML = `<text x="150" y="50" fill="#3f4d6e" font-size="11" text-anchor="middle" font-family="monospace">Log weight to see trend</text>`; return; }
+  const vals = log.map(l=>l.weight);
+  const min = Math.min(...vals)-1, max = Math.max(...vals)+1;
+  const w=300,h=100,pad=10;
+  const pts = log.map((l,i)=>{
+    const x = pad + (i/(log.length-1))*(w-pad*2);
+    const y = h-10 - ((l.weight-min)/(max-min))*(h-20);
+    return `${x},${y}`;
+  }).join(' ');
+  svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="#5b8cff" stroke-width="2"/>`;
+}
+document.getElementById('weight-log').addEventListener('click', ()=>{
+  const v = parseFloat(document.getElementById('weight-input').value);
+  if(!v) return;
+  state.weightLog.push({date:todayStr(), weight:v});
+  state.profile.weight = v;
+  save();
+  document.getElementById('weight-input').value='';
+  renderStatsView();
+  toast('Weight logged');
+});
+
+function renderAchievements(){
+  const grid = document.getElementById('ach-grid');
+  grid.innerHTML = ACHIEVEMENTS.map(ach=>{
+    const unlocked = state.unlockedAchievements.includes(ach.id);
+    return `<div class="ach-card ${unlocked?'unlocked':''}"><div class="aicon">${ach.icon}</div><div class="aname">${ach.name}</div><div class="adesc">${unlocked ? ach.desc : '???'}</div></div>`;
+  }).join('');
+  document.getElementById('ach-progress-note').textContent = `${state.unlockedAchievements.length} / ${ACHIEVEMENTS.length} unlocked`;
+}
+
+/* ======================= PROFILE ======================= */
+function renderProfile(){
+  document.getElementById('prof-name').textContent = state.profile.name;
+  document.getElementById('prof-height').textContent = state.profile.height + ' cm';
+  document.getElementById('prof-weight').textContent = state.profile.weight + ' kg';
+  document.getElementById('prof-equip').textContent = state.profile.equipment.join(', ') || 'Bodyweight';
+  document.getElementById('prof-rank').textContent = state.rank + ' — ' + RANK_TITLES[state.rank];
+  document.getElementById('prof-level').textContent = 'LV ' + state.level;
+  document.getElementById('prof-quests').textContent = state.questsCleared;
+  document.getElementById('prof-streak').textContent = state.longestStreak + ' days';
+  document.getElementById('prof-achievements').textContent = state.unlockedAchievements.length + ' / ' + ACHIEVEMENTS.length;
+  document.getElementById('prof-bosses').textContent = state.defeatedBosses.length + ' / ' + BOSSES.length;
+  document.getElementById('role-select').value = currentRole();
+  syncActivityDropdownForRole();
+}
+document.getElementById('role-select').addEventListener('change', (e)=>{
+  state.role = e.target.value;
+  save();
+  // Today's quest may already exist with a Run item from the old role — regenerate it
+  // so the change takes effect immediately rather than waiting until tomorrow.
+  generateDailyQuest(true);
+  syncActivityDropdownForRole();
+  toast(`<b>ROLE UPDATED</b><br>${ROLE_CONFIG[currentRole()].label}`);
+  renderAll();
+});
+function syncActivityDropdownForRole(){
+  const select = document.getElementById('log-activity');
+  const runOption = Array.from(select.options).find(o=>o.value==='Running (km)');
+  const isStudent = !ROLE_CONFIG[currentRole()].hasRun;
+  if(isStudent && runOption){
+    runOption.remove();
+  } else if(!isStudent && !runOption){
+    const opt = document.createElement('option');
+    opt.value = 'Running (km)'; opt.textContent = 'Running (km)';
+    // Re-insert after Pull-ups to match the original dropdown order
+    const pullupsOpt = Array.from(select.options).find(o=>o.value==='Pull-ups');
+    if(pullupsOpt) pullupsOpt.after(opt); else select.appendChild(opt);
+  }
+  syncLogFormForActivity();
+}
+document.getElementById('share-progress-btn').addEventListener('click', shareCurrentStats);
+document.getElementById('export-data').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'system_backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('import-data-btn').addEventListener('click', ()=>{
+  document.getElementById('import-data-file').click();
+});
+document.getElementById('import-data-file').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const parsed = JSON.parse(ev.target.result);
+      if(confirm('Importing will overwrite your current System data on this device. Continue?')){
+        state = reconcileState(parsed);
+        save();
+        toast('<b>BACKUP RESTORED</b>');
+        location.reload();
+      }
+    }catch(err){
+      toast('Invalid backup file', 'danger');
+    }
+  };
+  reader.readAsText(file);
+});
+document.getElementById('wipe-data').addEventListener('click', ()=>{
+  if(confirm('This will permanently delete all System data on this device. Continue?')){
+    localStorage.removeItem(SAVE_KEY);
+    location.reload();
+  }
+});
+
+/* ======================= HUD ======================= */
+function renderHud(){
+  document.getElementById('hud-name').textContent = state.profile.name.toUpperCase();
+  document.getElementById('hud-gold').textContent = state.gold;
+  document.getElementById('rank-badge').textContent = state.rank;
+  document.getElementById('rank-badge').style.setProperty('--rk', rankColorVar(state.rank));
+  document.getElementById('rankplate').style.setProperty('--rk', rankColorVar(state.rank));
+  document.getElementById('rank-title-name').textContent = RANK_TITLES[state.rank];
+  document.getElementById('rank-sub').textContent = `Rank ${state.rank} · Awakened`;
+  document.getElementById('lvl-num').textContent = 'LV ' + state.level;
+  const xpNeeded = 100 + (state.level-1)*20;
+  document.getElementById('xp-fill').style.setProperty('--pct', clamp(state.xp/xpNeeded*100,0,100)+'%');
+  document.getElementById('xp-num').textContent = `${state.xp}/${xpNeeded}`;
+  renderGearBonusStrip();
+
+  const rankIdx = RANKS.indexOf(state.rank);
+  document.body.style.setProperty('--blue', rankIdx>=4 ? '#f4d35e' : rankIdx>=3 ? '#ff5b8c' : rankIdx>=2 ? '#a78bfa' : '#5b8cff');
+}
+
+/* ======================= TAB NAV ======================= */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-'+tab.dataset.view).classList.add('active');
+    if(tab.dataset.view === 'stats'){ renderStatsView(); }
+    if(tab.dataset.view === 'store') renderStore();
+    if(tab.dataset.view === 'profile') renderProfile();
+    if(tab.dataset.view === 'train'){ renderLifts(); renderCustomRoutines(); if(document.querySelectorAll('#cr-exercise-rows .exercise-row').length===0) addExerciseRow(); }
+    if(tab.dataset.view === 'focus') renderFocusLog();
+    if(tab.dataset.view === 'boss') renderBossArena();
+  });
+});
+
+function renderStatsView(){
+  renderStreakRow();
+  renderAchievements();
+  renderWeeklyChart();
+  renderStatChart();
+  renderWeightChart();
+}
+
+/* ======================= MASTER RENDER ======================= */
+function renderDailyCapNote(){
+  const el = document.getElementById('daily-cap-note');
+  if(!el) return;
+  const today = todayStr();
+  const xpEarned = state.xpEarnedDate === today ? state.xpEarnedToday : 0;
+  const goldEarned = state.goldEarnedDate === today ? state.goldEarnedToday : 0;
+  el.textContent = `Daily XP: ${xpEarned} / ${DAILY_XP_CAP}  ·  Daily Gold: ${goldEarned} / ${DAILY_GOLD_CAP}`;
+}
+
+function renderAll(){
+  renderHud();
+  renderQuests();
+  renderStats();
+  renderSplit();
+  renderLifts();
+  renderBossArena();
+  renderDailyCapNote();
+  checkPenalty();
+  checkAchievements();
+}
+
+/* ======================= SPLASH SCREEN (home-screen launches only) ======================= */
+// Detects whether the app was opened from a home-screen install (standalone display mode)
+// rather than a normal browser tab. The splash only shows in that case, per design —
+// regular browser visits skip straight to the app with no added delay.
+function isStandaloneLaunch(){
+  const isStandaloneMedia = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  const isIOSStandalone = window.navigator.standalone === true; // older iOS Safari fallback
+  return isStandaloneMedia || isIOSStandalone;
+}
+
+// Each message carries its own display duration (ms) instead of splitting one flat
+// total evenly — a one-word line and a full sentence need very different amounts of
+// time to actually be read, not just flashed past. This is a deliberate, slow pace:
+// the goal is for the person to actually read these, especially the integrity line,
+// not just see a loading animation.
+const SPLASH_MESSAGES = [
+  { text: "The weak have no choice. The strong choose.", duration: 3400 },
+  { text: "Arise.", duration: 1800 },
+  { text: "Every rep logged is a step out of E-Rank.", duration: 3600 },
+  { text: "The System does not wait for motivation.", duration: 3000 },
+  { text: "If you edit your progress, you're only fooling yourself.", duration: 3800 },
+  { text: "Enjoying the grind? Buy dev4vr4th a coffee ☕", duration: 3000 },
+  { text: "Loading the Hunter's Association...", duration: 2000 }
+];
+
+function runSplashScreen(onDone){
+  const splash = document.getElementById('splash-screen');
+  const quoteEl = document.getElementById('splash-quote');
+  const barEl = document.getElementById('splash-loadbar-fill');
+  splash.style.display = 'flex';
+
+  const totalDuration = SPLASH_MESSAGES.reduce((sum, m) => sum + m.duration, 0);
+  barEl.style.transition = `width ${totalDuration}ms linear`;
+  requestAnimationFrame(()=>{ barEl.style.width = '100%'; });
+
+  let i = 0;
+  function showNext(){
+    quoteEl.textContent = SPLASH_MESSAGES[i].text;
+    quoteEl.classList.remove('fade');
+    const thisDuration = SPLASH_MESSAGES[i].duration;
+    setTimeout(()=>{
+      i++;
+      if(i >= SPLASH_MESSAGES.length){
+        splash.classList.add('fade-out');
+        setTimeout(()=>{ splash.style.display = 'none'; onDone(); }, 500);
+        return;
+      }
+      quoteEl.classList.add('fade');
+      setTimeout(showNext, 200);
+    }, thisDuration);
+  }
+  showNext();
+}
+
+/* ======================= SERVICE WORKER ======================= */
+// Registers sw.js for offline support. Safe to call even outside a PWA install —
+// browsers ignore it gracefully if service workers aren't supported, and a normal
+// browser tab can still benefit from offline caching once registered.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{ /* offline support simply won't be available; app still works online */ });
+  });
+}
+
+/* ======================= INIT ======================= */
+function init(){
+  syncActivityDropdownForRole();
+  if(state.onboarded){
+    document.getElementById('onboarding').style.display = 'none';
+    document.getElementById('awaken').style.display = 'none';
+    renderAll();
+  } else {
+    document.getElementById('onboarding').style.display = 'flex';
+    showObStep(0);
+  }
+}
+
+if(isStandaloneLaunch()){
+  runSplashScreen(init);
+} else {
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
