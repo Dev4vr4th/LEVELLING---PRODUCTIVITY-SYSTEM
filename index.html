@@ -6,9 +6,9 @@
 <title>THE SYSTEM</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#5b8cff">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -650,6 +650,8 @@ body{
       <div class="profile-row"><span>Achievements Unlocked</span><span id="prof-achievements"></span></div>
       <div class="profile-row"><span>Bosses Defeated</span><span id="prof-bosses"></span></div>
     </div>
+    <button class="btn primary full" id="share-progress-btn" style="margin:0 16px 18px; width:calc(100% - 32px);">Share Progress</button>
+
     <div class="section-title"><span class="t">Data</span></div>
     <div class="sys-panel">
       <div class="tick-bl"></div><div class="tick-br"></div>
@@ -1348,9 +1350,13 @@ function showRankModal(rank, isUp){
       <div class="rankup-eyebrow">${isUp ? 'Rank Up' : 'Rank Down'}</div>
       <div class="rankup-rank">${rank}</div>
       <div class="rankup-name">${RANK_TITLES[rank]}</div>
-      <button class="btn primary" id="rankmodal-close">Continue</button>
+      ${isUp ? '<button class="btn primary full" id="rankmodal-share" style="margin-bottom:8px;">Share Progress</button>' : ''}
+      <button class="btn ${isUp?'':'primary'} full" id="rankmodal-close">Continue</button>
     </div>`;
   document.body.appendChild(bg);
+  if(isUp){
+    document.getElementById('rankmodal-share').addEventListener('click', shareCurrentStats);
+  }
   document.getElementById('rankmodal-close').addEventListener('click', ()=>{ bg.remove(); renderAll(); });
 }
 
@@ -1535,6 +1541,225 @@ function finishBossFight(){
   showBossVictoryModal(boss, xpGain, goldGain);
 }
 
+/* ======================= SHARE PROGRESS (canvas card + Web Share API) ======================= */
+// Renders a System-themed image card entirely on-device (canvas), then hands it to the
+// native share sheet via the Web Share API — no server, no account, no data leaves the
+// device except the image the user explicitly chooses to share. Falls back to a plain
+// download if the browser/OS doesn't support sharing image files directly.
+const SHARE_RANK_COLORS = { E:'#6b7a9e', D:'#c98a4b', C:'#5b8cff', B:'#a78bfa', A:'#ff5b8c', S:'#f4d35e' };
+
+function drawShareCardBase(ctx, w, h, accentColor){
+  // Void background with a faint radial glow, matching the app's body background.
+  const bgGrad = ctx.createRadialGradient(w/2, h*0.25, 40, w/2, h*0.25, w*0.8);
+  bgGrad.addColorStop(0, '#0d1730');
+  bgGrad.addColorStop(1, '#070a12');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Faint grid texture, echoing .bg-grid
+  ctx.strokeStyle = 'rgba(91,140,255,0.05)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<w; x+=36){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0; y<h; y+=36){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+
+  // Outer panel border with bracket corner-ticks, the app's signature "System Window" motif.
+  const pad = 50;
+  ctx.strokeStyle = '#1c2842';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(pad, pad, w-pad*2, h-pad*2);
+
+  const tick = 36;
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'square';
+  // top-left
+  ctx.beginPath(); ctx.moveTo(pad, pad+tick); ctx.lineTo(pad, pad); ctx.lineTo(pad+tick, pad); ctx.stroke();
+  // top-right
+  ctx.beginPath(); ctx.moveTo(w-pad-tick, pad); ctx.lineTo(w-pad, pad); ctx.lineTo(w-pad, pad+tick); ctx.stroke();
+  // bottom-left
+  ctx.beginPath(); ctx.moveTo(pad, h-pad-tick); ctx.lineTo(pad, h-pad); ctx.lineTo(pad+tick, h-pad); ctx.stroke();
+  // bottom-right
+  ctx.beginPath(); ctx.moveTo(w-pad-tick, h-pad); ctx.lineTo(w-pad, h-pad); ctx.lineTo(w-pad, h-pad-tick); ctx.stroke();
+}
+
+function drawShareCardFooter(ctx, w, h){
+  ctx.font = '500 22px "JetBrains Mono", monospace';
+  ctx.fillStyle = 'rgba(199,211,238,0.45)';
+  ctx.textAlign = 'center';
+  ctx.fillText('THE SYSTEM  ·  made by dev4vr4th & Claude', w/2, h-80);
+}
+
+// Builds a boss-victory share card. Returns a canvas element.
+function buildBossShareCard(boss){
+  const w = 1080, h = 1350;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const accent = boss.color;
+
+  drawShareCardBase(ctx, w, h, accent);
+
+  ctx.textAlign = 'center';
+  ctx.font = '600 30px "JetBrains Mono", monospace';
+  ctx.fillStyle = accent;
+  ctx.fillText('BOSS DEFEATED', w/2, 260);
+
+  ctx.font = '800 90px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = accent; ctx.shadowBlur = 40;
+  ctx.fillText(boss.icon, w/2, 420);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '700 56px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#c7d3ee';
+  wrapCanvasText(ctx, boss.name, w/2, 540, w-200, 64);
+
+  ctx.font = '400 30px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText(`"${boss.reward.title}" title earned`, w/2, 660);
+
+  ctx.font = '600 34px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#e8b93f';
+  ctx.fillText(`+${boss.reward.xp} XP   ·   +${boss.reward.gold} Gold`, w/2, 740);
+
+  // Hunter identity strip
+  ctx.font = '500 26px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText(`${state.profile.name}  ·  Rank ${state.rank}  ·  LV ${state.level}`, w/2, 980);
+
+  drawShareCardFooter(ctx, w, h);
+  return canvas;
+}
+
+// Builds a general "current stats" share card. Returns a canvas element.
+function buildStatsShareCard(){
+  const w = 1080, h = 1350;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const accent = SHARE_RANK_COLORS[state.rank] || '#5b8cff';
+
+  drawShareCardBase(ctx, w, h, accent);
+
+  ctx.textAlign = 'center';
+  ctx.font = '600 28px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText('HUNTER STATUS', w/2, 220);
+
+  // Rank badge (octagon-ish bracket, echoing .rank-badge)
+  ctx.font = '800 130px "JetBrains Mono", monospace';
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accent; ctx.shadowBlur = 50;
+  ctx.fillText(state.rank, w/2, 410);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '700 40px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#c7d3ee';
+  ctx.fillText(RANK_TITLES[state.rank], w/2, 480);
+
+  ctx.font = '500 32px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText(`LV ${state.level}  ·  ${state.profile.name}`, w/2, 540);
+
+  // Stat grid (2x2), echoing .stat-box
+  const stats = [
+    {k:'STR', label:'Strength'}, {k:'AGI', label:'Agility'},
+    {k:'VIT', label:'Vitality'}, {k:'SEN', label:'Sense'}
+  ];
+  const gridTop = 640, boxW = 420, boxH = 160, gapX = 40, gapY = 30;
+  const gridLeft = w/2 - boxW - gapX/2;
+  stats.forEach((s, i)=>{
+    const col = i % 2, row = Math.floor(i/2);
+    const x = gridLeft + col*(boxW+gapX);
+    const y = gridTop + row*(boxH+gapY);
+    ctx.strokeStyle = '#1c2842';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, boxW, boxH);
+    ctx.textAlign = 'left';
+    ctx.font = '500 22px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#6b7a9e';
+    ctx.fillText(s.label.toUpperCase(), x+24, y+44);
+    ctx.font = '700 56px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#c7d3ee';
+    ctx.fillText(String(state.stats[s.k]), x+24, y+108);
+    ctx.textAlign = 'center';
+  });
+
+  ctx.font = '500 26px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#6b7a9e';
+  ctx.fillText(`${state.defeatedBosses.length} Bosses Defeated  ·  ${state.questsCleared} Quests Cleared`, w/2, gridTop + 2*(boxH+gapY) + 50);
+
+  drawShareCardFooter(ctx, w, h);
+  return canvas;
+}
+
+// Simple word-wrap helper for canvas text (canvas has no native text wrapping).
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(' ');
+  let line = '';
+  let lines = [];
+  for(const word of words){
+    const test = line ? line + ' ' + word : word;
+    if(ctx.measureText(test).width > maxWidth && line){
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if(line) lines.push(line);
+  const startY = y - (lines.length-1)*lineHeight/2;
+  lines.forEach((l, i)=> ctx.fillText(l, x, startY + i*lineHeight));
+}
+
+// Takes a canvas, converts it to a PNG file, and hands it to the native share sheet.
+// Falls back to a plain image download if Web Share (with files) isn't supported —
+// covers desktop browsers and older devices without leaving the user stuck.
+function shareCanvasCard(canvas, shareTitle, shareText){
+  canvas.toBlob(async (blob)=>{
+    if(!blob){ toast('Could not generate share image', 'danger'); return; }
+    const file = new File([blob], 'the-system-progress.png', { type: 'image/png' });
+    const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+
+    if(navigator.share && canShareFiles){
+      try{
+        await navigator.share({ files: [file], title: shareTitle, text: shareText });
+      }catch(err){ /* user cancelled the share sheet — not an error */ }
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'the-system-progress.png';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Sharing not supported here — image downloaded instead', 'gold');
+    }
+  }, 'image/png');
+}
+
+// Waits for the JetBrains Mono web font to finish loading before drawing canvas text —
+// canvas doesn't wait for fonts automatically, so without this a share card could render
+// in a generic fallback font if triggered very soon after page load.
+function whenFontsReady(callback){
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(callback).catch(callback);
+  } else {
+    callback();
+  }
+}
+
+function shareBossVictory(boss){
+  whenFontsReady(()=>{
+    const canvas = buildBossShareCard(boss);
+    shareCanvasCard(canvas, 'THE SYSTEM', `I just defeated ${boss.name} in real life. Arise.`);
+  });
+}
+function shareCurrentStats(){
+  whenFontsReady(()=>{
+    const canvas = buildStatsShareCard();
+    shareCanvasCard(canvas, 'THE SYSTEM', `Rank ${state.rank} · Level ${state.level}. Building myself one quest at a time.`);
+  });
+}
+
 function showBossVictoryModal(boss, xpGain, goldGain){
   const bg = document.createElement('div');
   bg.className = 'modal-bg';
@@ -1547,9 +1772,11 @@ function showBossVictoryModal(boss, xpGain, goldGain){
       <div class="rankup-rank" style="font-size:26px;">${boss.name}</div>
       <div class="rankup-name">"${boss.reward.title}" title earned</div>
       <div style="font-family:var(--mono); font-size:12px; color:var(--gold); margin-bottom:18px;">+${xpGain} XP · +${goldGain} Gold · +${boss.reward.statAll} all stats</div>
-      <button class="btn primary" id="bossmodal-close">Continue</button>
+      <button class="btn primary full" id="bossmodal-share" style="margin-bottom:8px;">Share Victory</button>
+      <button class="btn full" id="bossmodal-close">Continue</button>
     </div>`;
   document.body.appendChild(bg);
+  document.getElementById('bossmodal-share').addEventListener('click', ()=> shareBossVictory(boss));
   document.getElementById('bossmodal-close').addEventListener('click', ()=>{ bg.remove(); renderAll(); });
 }
 
@@ -1642,20 +1869,32 @@ function renderStats(){
 // 7-day cycle: Mon/Tue upper-lower split, Wed full body, Thu light/recovery,
 // Fri/Sat upper-lower, Sun full rest. This avoids daily max-intensity training,
 // which raises injury and burnout risk versus a split with built-in recovery.
+// Each day-type has a larger exercise pool than fits on screen — "Regenerate Split"
+// reshuffles which exercises from that pool are shown, so the button visibly does
+// something, while staying correct for what today's recovery schedule calls for.
 const SPLITS = {
   bodyweight:{
-    upper:["Push-ups 4x15","Pike Push-ups 3x10","Diamond Push-ups 3x12","Plank 3x60s","Tricep Dips 3x15"],
-    lower:["Squats 4x20","Lunges 3x12/leg","Glute Bridges 3x20","Wall Sit 3x45s","Calf Raises 4x20"],
-    full:["Burpees 4x12","Mountain Climbers 4x30s","Jump Squats 3x15","Push-up to Plank 3x10","Star Jumps 3x20"],
-    light:["Light Walk 20min","Stretching Routine 15min","Mobility Flow 10min"]
+    upper:["Push-ups 4x15","Pike Push-ups 3x10","Diamond Push-ups 3x12","Plank 3x60s","Tricep Dips 3x15","Incline Push-ups 3x15","Shoulder Taps 3x20","Wall Push-ups 3x20"],
+    lower:["Squats 4x20","Lunges 3x12/leg","Glute Bridges 3x20","Wall Sit 3x45s","Calf Raises 4x20","Step-ups 3x12/leg","Bulgarian Split Squats 3x10/leg","Donkey Kicks 3x15/leg"],
+    full:["Burpees 4x12","Mountain Climbers 4x30s","Jump Squats 3x15","Push-up to Plank 3x10","Star Jumps 3x20","Bear Crawls 3x30s","High Knees 3x30s","Plank Jacks 3x20"],
+    light:["Light Walk 20min","Stretching Routine 15min","Mobility Flow 10min","Easy Yoga Flow 15min","Foam Rolling 10min"]
   },
   weighted:{
-    upper:["Bench Press 4x8","Overhead Press 3x10","Rows 4x10","Lat Pulldown 3x12","Bicep Curls 3x12"],
-    lower:["Back Squat 4x8","Romanian Deadlift 3x10","Leg Press 3x12","Walking Lunges 3x12","Calf Raises 4x15"],
-    full:["Deadlift 4x6","Pull-ups 4x8","Dumbbell Thrusters 3x12","Kettlebell Swings 3x15","Farmer Carries 3x40m"],
-    light:["Light Cycling 20min","Foam Rolling 15min","Mobility Flow 10min"]
+    upper:["Bench Press 4x8","Overhead Press 3x10","Rows 4x10","Lat Pulldown 3x12","Bicep Curls 3x12","Incline Dumbbell Press 3x10","Face Pulls 3x15","Tricep Pushdowns 3x12"],
+    lower:["Back Squat 4x8","Romanian Deadlift 3x10","Leg Press 3x12","Walking Lunges 3x12","Calf Raises 4x15","Leg Curls 3x12","Hip Thrusts 3x12","Goblet Squats 3x15"],
+    full:["Deadlift 4x6","Pull-ups 4x8","Dumbbell Thrusters 3x12","Kettlebell Swings 3x15","Farmer Carries 3x40m","Clean and Press 3x8","Renegade Rows 3x10","Box Step-ups 3x12"],
+    light:["Light Cycling 20min","Foam Rolling 15min","Mobility Flow 10min","Easy Row 15min","Recovery Walk 20min"]
   }
 };
+
+// How many exercises to show at once from the pool (keeps the card a manageable length).
+const SPLIT_DISPLAY_COUNT = 5;
+
+function pickRandomExercises(pool, count){
+  const shuffled = pool.slice().sort(()=>Math.random()-0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
 function renderSplit(){
   const now = new Date();
   const hasWeights = state.profile.equipment.some(e=>['dumbbells','barbell','fullgym'].includes(e));
@@ -1668,7 +1907,8 @@ function renderSplit(){
     return;
   }
   const dayType = isLightDay(now) ? 'light' : ['upper','lower','full','upper'][now.getDay()%4];
-  const exercises = pool[dayType];
+  const fullPool = pool[dayType];
+  const exercises = pickRandomExercises(fullPool, dayType==='light' ? 3 : SPLIT_DISPLAY_COUNT);
   const labels = {upper:'Upper Body',lower:'Lower Body',full:'Full Body',light:'Active Recovery'};
   document.getElementById('split-content').innerHTML = `
     <div style="font-family:var(--mono); font-size:11px; color:var(--violet); text-transform:uppercase; letter-spacing:.1em; margin-bottom:10px;">${labels[dayType]} Protocol</div>
@@ -2169,6 +2409,7 @@ function syncActivityDropdownForRole(){
   }
   syncLogFormForActivity();
 }
+document.getElementById('share-progress-btn').addEventListener('click', shareCurrentStats);
 document.getElementById('export-data').addEventListener('click', ()=>{
   const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2281,13 +2522,19 @@ function isStandaloneLaunch(){
   return isStandaloneMedia || isIOSStandalone;
 }
 
+// Each message carries its own display duration (ms) instead of splitting one flat
+// total evenly — a one-word line and a full sentence need very different amounts of
+// time to actually be read, not just flashed past. This is a deliberate, slow pace:
+// the goal is for the person to actually read these, especially the integrity line,
+// not just see a loading animation.
 const SPLASH_MESSAGES = [
-  "The weak have no choice. The strong choose.",
-  "Arise.",
-  "Every rep logged is a step out of E-Rank.",
-  "The System does not wait for motivation.",
-  "Enjoying the grind? Buy dev4vr4th a coffee ☕",
-  "Loading the Hunter's Association..."
+  { text: "The weak have no choice. The strong choose.", duration: 3400 },
+  { text: "Arise.", duration: 1800 },
+  { text: "Every rep logged is a step out of E-Rank.", duration: 3600 },
+  { text: "The System does not wait for motivation.", duration: 3000 },
+  { text: "If you edit your progress, you're only fooling yourself.", duration: 3800 },
+  { text: "Enjoying the grind? Buy dev4vr4th a coffee ☕", duration: 3000 },
+  { text: "Loading the Hunter's Association...", duration: 2000 }
 ];
 
 function runSplashScreen(onDone){
@@ -2296,29 +2543,27 @@ function runSplashScreen(onDone){
   const barEl = document.getElementById('splash-loadbar-fill');
   splash.style.display = 'flex';
 
-  const totalDuration = 3200; // ms
-  const perMessage = totalDuration / SPLASH_MESSAGES.length;
-  let i = 0;
-
-  quoteEl.textContent = SPLASH_MESSAGES[0];
+  const totalDuration = SPLASH_MESSAGES.reduce((sum, m) => sum + m.duration, 0);
   barEl.style.transition = `width ${totalDuration}ms linear`;
   requestAnimationFrame(()=>{ barEl.style.width = '100%'; });
 
-  const interval = setInterval(()=>{
-    i++;
-    if(i >= SPLASH_MESSAGES.length){ clearInterval(interval); return; }
-    quoteEl.classList.add('fade');
+  let i = 0;
+  function showNext(){
+    quoteEl.textContent = SPLASH_MESSAGES[i].text;
+    quoteEl.classList.remove('fade');
+    const thisDuration = SPLASH_MESSAGES[i].duration;
     setTimeout(()=>{
-      quoteEl.textContent = SPLASH_MESSAGES[i];
-      quoteEl.classList.remove('fade');
-    }, 200);
-  }, perMessage);
-
-  setTimeout(()=>{
-    clearInterval(interval);
-    splash.classList.add('fade-out');
-    setTimeout(()=>{ splash.style.display = 'none'; onDone(); }, 500);
-  }, totalDuration);
+      i++;
+      if(i >= SPLASH_MESSAGES.length){
+        splash.classList.add('fade-out');
+        setTimeout(()=>{ splash.style.display = 'none'; onDone(); }, 500);
+        return;
+      }
+      quoteEl.classList.add('fade');
+      setTimeout(showNext, 200);
+    }, thisDuration);
+  }
+  showNext();
 }
 
 /* ======================= SERVICE WORKER ======================= */

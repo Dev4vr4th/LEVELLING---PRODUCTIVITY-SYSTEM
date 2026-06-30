@@ -3,7 +3,7 @@
 // old caches and re-fetches fresh files — without this, users who already
 // installed the app would be stuck on the version they first downloaded forever,
 // even after you push changes to GitHub Pages.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `the-system-${CACHE_VERSION}`;
 
 const ASSETS = [
