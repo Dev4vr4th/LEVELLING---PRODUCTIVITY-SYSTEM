@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `the-system-${CACHE_VERSION}`;
 const FONT_CACHE = `the-system-fonts-${CACHE_VERSION}`;
 
