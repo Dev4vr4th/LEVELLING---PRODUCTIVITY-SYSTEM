@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://dev4vr4th.github.io/the-system/sitemap.xml
+Sitemap:  https://dev4vr4th.github.io/LEVELLING---PRODUCTIVITY-SYSTEM/sitemap.xml
