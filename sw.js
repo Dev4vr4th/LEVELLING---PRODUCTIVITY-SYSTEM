@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v42';
+const CACHE_VERSION = 'v43';
 const CACHE_NAME = `the-system-${CACHE_VERSION}`;
 // Deliberately NOT versioned — this cache is meant to persist across every future
 // CACHE_VERSION bump so fonts never need re-downloading after the first load. (Previously
@@ -65,7 +65,8 @@ self.addEventListener('fetch', (e) => {
 
   if (isHTML) {
     e.respondWith(
-      fetch(e.request)
+      // cache:'no-cache' forces revalidation so the browser's HTTP cache can't serve a stale app.html
+      fetch(e.request, { cache: 'no-cache' })
         .then((networkResponse) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(e.request, networkResponse.clone()));
           return networkResponse;

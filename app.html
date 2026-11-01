@@ -310,7 +310,7 @@ body{
 #splash-screen{
   position:fixed; inset:0; z-index:9999; background:var(--void);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  max-width:480px; margin:0 auto; text-align:center; padding:40px 30px;
+  text-align:center; padding:40px 30px;
   transition:opacity .5s ease;
 }
 #splash-screen.fade-out{ opacity:0; pointer-events:none; }
@@ -334,6 +334,16 @@ body{
 .splash-loadbar i{ position:absolute; inset:0; width:0%; background:linear-gradient(90deg,var(--blue),var(--violet)); box-shadow:0 0 8px var(--blue-glow); transition:width linear;}
 .splash-credit{ position:absolute; bottom:28px; left:0; right:0; text-align:center; font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); letter-spacing:.05em;}
 
+/* splash: scale up on laptop/desktop so the installed app doesn't show a tiny phone-sized splash */
+@media (min-width:900px){
+  .splash-badge{ width:130px; height:130px; margin-bottom:34px; }
+  .splash-badge svg{ width:62px; height:62px; }
+  .splash-title{ font-size:18px; margin-bottom:48px; }
+  .splash-quote{ font-size:22px; max-width:640px; min-height:90px; }
+  .splash-loadbar{ width:280px; height:4px; margin-top:44px; }
+  .splash-credit{ font-size:13px; bottom:36px; }
+}
+
 /* ---------- footer credit label (shown inside the app) ---------- */
 .app-credit{
   text-align:center; padding:18px 0 28px; font-family:var(--mono); font-size:10px;
@@ -341,7 +351,9 @@ body{
 }
 
 /* ---------- onboarding ---------- */
-#onboarding{ position:fixed; inset:0; background:var(--void); z-index:100; display:flex; flex-direction:column; max-width:480px; margin:0 auto; overflow-y:auto;}
+#onboarding{ position:fixed; inset:0; background:var(--void); z-index:100; display:flex; flex-direction:column; align-items:center; overflow-y:auto;}
+#onboarding > *{ width:100%; max-width:480px; }
+@media (min-width:900px){ #onboarding > *{ max-width:560px; } }
 .ob-progress{ display:flex; gap:5px; padding:20px 20px 0; }
 .ob-progress i{ flex:1; height:3px; background:var(--line); }
 .ob-progress i.done{ background:var(--blue); }
