@@ -532,6 +532,144 @@ body{
 .preset-chip.active{ border-color:var(--blue); color:var(--blue); background:rgba(91,140,255,.08);}
 .session-log-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:12px;}
 .session-log-row span:last-child{ font-family:var(--mono); color:var(--ink-dim);}
+
+/* =====================================================================
+   GUIDED TOUR (added) — styled to match the app's own buttons, toasts and panels
+   ===================================================================== */
+.sb-right{ display:flex; align-items:center; gap:12px; }
+#tour-help-btn{
+  font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  padding:6px 11px; border:1px solid var(--line-bright); background:var(--panel-2); color:var(--ink);
+  cursor:pointer; transition:.15s; border-radius:0;
+}
+#tour-help-btn:hover{ border-color:var(--blue); color:var(--blue); }
+#tour-help-btn:active{ transform:scale(.96); }
+
+#tour-root{ position:fixed; inset:0; z-index:500; }
+#tour-block{ position:absolute; inset:0; background:transparent; }
+#tour-spot{
+  position:fixed; border-radius:0; pointer-events:none;
+  box-shadow:0 0 0 9999px rgba(4,6,12,.84), 0 0 0 2px var(--blue), 0 0 22px 4px var(--blue-glow);
+  transition:top .28s ease, left .28s ease, width .28s ease, height .28s ease;
+}
+#tour-spot.center{ box-shadow:0 0 0 9999px rgba(4,6,12,.88); }
+#tour-spot.pulse{ animation:tourPulse 1.6s ease-in-out infinite; }
+@keyframes tourPulse{ 50%{ box-shadow:0 0 0 9999px rgba(4,6,12,.84), 0 0 0 3px var(--blue), 0 0 34px 8px var(--blue-glow);} }
+
+/* card = same look as .toast (dark panel, blue 1px border, square edges, blue glow) */
+#tour-card{
+  position:fixed; background:rgba(10,14,23,.97); border:1px solid var(--blue); border-radius:0;
+  box-shadow:0 0 24px -4px var(--blue-glow);
+  padding:16px 18px 12px; width:min(400px, calc(100vw - 24px)); max-height:calc(100vh - 24px); overflow-y:auto;
+  animation:toastin .25s ease;
+}
+#tour-card .t-step{ font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:var(--ink-dim); text-transform:uppercase; margin-bottom:6px; }
+#tour-card .t-bar{ height:3px; background:var(--line); margin-bottom:10px; }
+#tour-card .t-bar i{ display:block; height:100%; background:var(--blue); transition:width .3s; }
+#tour-card .t-title{ font-family:var(--mono); font-size:15px; font-weight:700; letter-spacing:.04em; color:var(--blue); line-height:1.35; margin-bottom:8px; }
+#tour-card .t-body{ font-size:15.5px; line-height:1.5; color:var(--ink); }
+#tour-card .t-body p{ margin-bottom:6px; }
+#tour-card .t-body b{ color:var(--blue); font-weight:600; }
+#tour-card .t-body .tip{ margin-top:8px; padding:7px 10px; border-left:2px solid var(--gold); background:rgba(232,185,63,.07); font-size:14px; }
+#tour-card .t-body .tip b{ color:var(--gold); }
+#tour-card .t-gloss{ display:grid; grid-template-columns:auto 1fr; gap:5px 12px; font-size:15px; line-height:1.4; }
+#tour-card .t-gloss dt{ font-family:var(--mono); font-weight:700; color:var(--blue); white-space:nowrap; }
+#tour-card .t-gloss dd{ color:var(--ink); }
+/* buttons use the app's real .btn / .btn.primary styles; only layout here */
+#tour-card .t-actions{ display:flex; gap:10px; margin-top:12px; }
+#tour-card .t-actions .btn{ flex:1; padding:13px 14px; }
+#tour-card .t-actions .btn.primary{ flex:1.5; }
+#tour-card .t-skip{ display:block; width:100%; margin-top:4px; padding:8px; background:none; border:none; cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-dim); }
+#tour-card .t-skip:hover{ color:var(--blue); }
+@media (prefers-reduced-motion:reduce){ #tour-spot, #tour-card{ transition:none; animation:none; } #tour-spot.pulse{ animation:none; } }
+
+/* short screens (phones held sideways): wider, tighter card so it fits beside/below the highlight */
+@media (max-height:520px){
+  #tour-card{ width:min(560px, calc(100vw - 24px)); padding:10px 14px 8px; }
+  #tour-card .t-step{ margin-bottom:4px; font-size:10px; }
+  #tour-card .t-bar{ margin-bottom:6px; }
+  #tour-card .t-title{ font-size:14px; margin-bottom:4px; }
+  #tour-card .t-body{ font-size:14px; line-height:1.4; }
+  #tour-card .t-body p{ margin-bottom:4px; }
+  #tour-card .t-body .tip{ margin-top:5px; padding:5px 8px; font-size:13px; }
+  #tour-card .t-gloss{ font-size:13.5px; gap:2px 12px; grid-template-columns:auto 1fr auto 1fr; }
+  #tour-card .t-actions{ margin-top:8px; gap:8px; }
+  #tour-card .t-actions .btn{ padding:9px 12px; font-size:11.5px; }
+  #tour-card .t-skip{ margin-top:0; padding:4px; }
+}
+
+/* =====================================================================
+   WIDE-SCREEN / DESKTOP LAYOUT (added) — only applies at >= 900px wide.
+   Phones and small tablets keep the original layout untouched.
+   ===================================================================== */
+.dcol{ display:contents; }                      /* wrapper is invisible on phones */
+
+@media (min-width:900px){
+  body{ background: radial-gradient(ellipse 1700px 900px at 50% -10%, #0d1730 0%, var(--void) 60%), var(--void); }
+  .bg-grid{ mask-image: radial-gradient(ellipse 1100px 600px at 50% 0%, black 0%, transparent 70%); }
+
+  /* shell: sidebar menu on the left, content on the right */
+  #app{ max-width:1360px; display:grid; grid-template-columns:232px minmax(0,1fr); grid-template-rows:auto 1fr; }
+  .statusbar{ grid-column:2; grid-row:1; padding:26px 32px 6px; }
+  .view{ grid-column:2; grid-row:2; min-width:0; padding:0 16px 48px; }
+
+  .tabbar{
+    grid-column:1; grid-row:1 / span 2; align-self:start; position:sticky; top:0; height:100vh;
+    flex-direction:column; justify-content:flex-start; gap:4px; overflow-y:auto;
+    padding:30px 14px 20px; border-top:none; border-right:1px solid var(--line);
+  }
+  .tabbar::before{
+    content:'THE SYSTEM'; display:block; font-family:var(--mono); font-size:12px; letter-spacing:.3em;
+    color:var(--ink-dim); padding:0 14px 22px; margin-bottom:6px; border-bottom:1px solid var(--line);
+  }
+  .tab{
+    flex:none; flex-direction:row; justify-content:flex-start; gap:14px; padding:13px 14px;
+    font-size:12px; letter-spacing:.1em; border-top:none; border-left:2px solid transparent;
+  }
+  .tab svg{ width:20px; height:20px; }
+  .tab:hover{ color:var(--ink); background:rgba(91,140,255,.06); }
+  .tab:hover svg{ stroke:var(--ink); }
+  .tab.active{ border-top:none; border-left-color:var(--blue); background:rgba(91,140,255,.10); }
+  .tab.active:hover{ color:var(--blue); }
+  .tab.active:hover svg{ stroke:var(--blue); }
+
+  /* content: remove the phone-sized side gutters, use two columns */
+  .view > *, .dcol > *{ margin-left:0 !important; margin-right:0 !important; }
+  .view > .btn, .dcol > .btn{ width:100% !important; }
+  .view > .section-title, .dcol > .section-title{ break-after:avoid; }
+
+  /* Home, Train, Focus, Stats, Profile: two deliberate columns */
+  #view-home.active, #view-train.active, #view-focus.active, #view-stats.active, #view-profile.active{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:32px; align-items:start; column-count:auto; }
+  .dcol{ display:block; min-width:0; }
+  #view-stats.active{ grid-template-rows:auto 1fr; }
+  #view-stats .dcol:nth-child(1){ grid-column:1; grid-row:1; }
+  #view-stats .dcol:nth-child(3){ grid-column:1; grid-row:2; }
+  #view-stats .dcol:nth-child(2){ grid-column:2; grid-row:1 / span 2; }
+
+  /* Boss & Store: one wide column holding multi-column grids */
+  #view-boss.active, #view-store.active{ column-count:1; }
+  #boss-list{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 24px; align-items:stretch; }
+  #boss-list .boss-card{ margin:0 0 14px !important; height:calc(100% - 14px); }
+  .store-grid{ grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+  .ach-grid{ grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); }
+
+  .chart-box svg{ height:150px; }
+  .rankplate{ padding:18px 22px; max-width:720px; }
+  .quest-card{ margin-left:0; margin-right:0; }
+
+  /* toasts sit over the content area, not the middle of the page */
+  #toast-layer{ max-width:520px; }
+}
+
+/* very large monitors: slightly roomier */
+@media (min-width:1500px){ #app{ max-width:1480px; } }
+
+/* wide but short screens (e.g. phone held sideways): keep the sidebar usable */
+@media (min-width:900px) and (max-height:620px){
+  .tabbar{ padding-top:14px; }
+  .tabbar::before{ padding-bottom:10px; }
+  .tab{ padding:9px 14px; }
+}
 </style>
 </head>
 <body>
@@ -657,7 +795,7 @@ body{
   <div class="statusbar">
     <div class="sb-top">
       <div class="sb-title">THE SYSTEM // <b id="hud-name">HUNTER</b></div>
-      <div class="sb-gold">◆ <span id="hud-gold">0</span></div>
+      <div class="sb-right"><button type="button" id="tour-help-btn" aria-label="Open the guided tour">? Guide</button><div class="sb-gold">◆ <span id="hud-gold">0</span></div></div>
     </div>
     <div class="rankplate" id="rankplate">
       <div class="rank-badge" id="rank-badge">E</div>
@@ -676,6 +814,7 @@ body{
 
   <!-- ============ HOME VIEW ============ -->
   <div class="view active" id="view-home">
+    <div class="dcol">
     <div class="section-title"><span class="t">Daily Quest</span></div>
     <div id="quest-area"></div>
     <div id="daily-cap-note" style="margin:0 16px 14px; font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); text-align:center;"></div>
@@ -693,6 +832,8 @@ body{
     </div>
     <button class="btn full" id="suggest-activity-btn" style="margin:0 16px 20px; width:calc(100% - 32px);">🎲 Free right now? Get a suggestion</button>
 
+    </div><!-- /dcol A -->
+    <div class="dcol">
     <div class="section-title"><span class="t">To-Do List</span><a id="todo-clear-completed">Clear Done</a></div>
     <div class="sys-panel" id="todo-panel">
       <div class="tick-bl"></div><div class="tick-br"></div>
@@ -721,10 +862,12 @@ body{
       <button class="btn full" style="margin-top:8px; display:none;" id="log-split-btn">Log as Today's Workout</button>
     </div>
     <button class="btn full" id="target-muscle-btn" style="margin:8px 16px 20px; width:calc(100% - 32px);">🎯 Target Specific Muscles</button>
+    </div><!-- /dcol B -->
   </div>
 
   <!-- ============ TRAIN VIEW ============ -->
   <div class="view" id="view-train">
+    <div class="dcol">
     <div class="section-title"><span class="t">Strength Benchmarks</span></div>
     <div class="sys-panel">
       <div class="tick-bl"></div><div class="tick-br"></div>
@@ -749,6 +892,8 @@ body{
       <button class="btn primary full" id="log-submit">Log Activity → Earn XP</button>
     </div>
 
+    </div><!-- /dcol A -->
+    <div class="dcol">
     <div class="section-title"><span class="t">Your Custom Routines</span></div>
     <div id="custom-routines-list" style="margin:0 16px 14px;"></div>
     <div class="sys-panel">
@@ -759,6 +904,7 @@ body{
       <button class="btn full" id="cr-add-exercise" style="margin-bottom:12px;">+ Add Exercise</button>
       <button class="btn primary full" id="cr-save">Save Routine</button>
     </div>
+    </div><!-- /dcol B -->
   </div>
 
   <!-- ============ STORE VIEW ============ -->
@@ -772,6 +918,7 @@ body{
 
   <!-- ============ FOCUS VIEW ============ -->
   <div class="view" id="view-focus">
+    <div class="dcol">
     <div class="section-title"><span class="t">Focus Timer</span></div>
     <div class="sys-panel">
       <div class="tick-bl"></div><div class="tick-br"></div>
@@ -801,6 +948,8 @@ body{
       <button class="btn full" id="timer-skip-break" style="display:none; margin:10px 16px 0; width:calc(100% - 32px); border-color:var(--gold); color:var(--gold);">Skip Break</button>
     </div>
 
+    </div><!-- /dcol A -->
+    <div class="dcol">
     <div class="section-title"><span class="t">Today's Focus Log</span></div>
     <div class="sys-panel">
       <div class="tick-bl"></div><div class="tick-br"></div>
@@ -809,6 +958,7 @@ body{
         <span>Total focused today</span><span id="focus-total">0 min</span>
       </div>
     </div>
+    </div><!-- /dcol B -->
   </div>
 
   <!-- ============ BOSS VIEW ============ -->
@@ -822,13 +972,18 @@ body{
 
   <!-- ============ ANALYTICS VIEW ============ -->
   <div class="view" id="view-stats">
+    <div class="dcol">
     <div class="section-title"><span class="t">Consistency Streak</span></div>
     <div class="streak-row" id="streak-row"></div>
 
+    </div><!-- /dcol 1 -->
+    <div class="dcol">
     <div class="section-title"><span class="t">Achievements</span></div>
     <div class="ach-progress-note" id="ach-progress-note"></div>
     <div class="ach-grid" id="ach-grid"></div>
 
+    </div><!-- /dcol 2 -->
+    <div class="dcol">
     <div class="section-title"><span class="t">Weekly Activity</span></div>
     <div class="chart-box"><svg id="chart-weekly" viewBox="0 0 300 140"></svg></div>
 
@@ -844,10 +999,12 @@ body{
       </div>
       <svg id="chart-weight" viewBox="0 0 300 100" style="width:100%;"></svg>
     </div>
+    </div><!-- /dcol 3 -->
   </div>
 
   <!-- ============ PROFILE VIEW ============ -->
   <div class="view" id="view-profile">
+    <div class="dcol">
     <div class="section-title"><span class="t">Settings</span></div>
     <div class="sys-panel">
       <div class="tick-bl"></div><div class="tick-br"></div>
@@ -880,6 +1037,8 @@ body{
     </div>
     <button class="btn primary full" id="share-progress-btn" style="margin:0 16px 18px; width:calc(100% - 32px);">Share Progress</button>
 
+    </div><!-- /dcol A -->
+    <div class="dcol">
     <div class="section-title"><span class="t">Cloud Sync</span></div>
     <div class="sys-panel" id="cloudsync-panel">
       <div class="tick-bl"></div><div class="tick-br"></div>
@@ -934,6 +1093,7 @@ body{
     </div>
     <div class="app-credit">made by dev4vr4th &amp; Claude</div>
     <div style="text-align:center; margin:6px 0 20px;"><a href="./index.html" style="font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); text-decoration:none; letter-spacing:.05em;">← About THE SYSTEM</a></div>
+    </div><!-- /dcol B -->
   </div>
 
   <!-- ============ TAB BAR ============ -->
@@ -4375,5 +4535,336 @@ if(isStandaloneLaunch()){
 
 })();
 </script>
+<script>
+/* =====================================================================
+   GUIDED TOUR (added) — self-contained; does not touch app state or saves.
+   Only stores one tiny flag in localStorage ("solo_system_tour_v1") so the
+   welcome card is shown once. The tour can be reopened any time from the
+   "? Guide" button in the top bar.
+   ===================================================================== */
+(function(){
+'use strict';
+var FLAG_KEY = 'solo_system_tour_v1';
+function getFlag(){ try{ return localStorage.getItem(FLAG_KEY); }catch(e){ return null; } }
+function setFlag(v){ try{ localStorage.setItem(FLAG_KEY, v); }catch(e){} }
+function $(s){ return document.querySelector(s); }
+function panelOf(sel){ var e=$(sel); return e ? (e.closest('.sys-panel') || e) : null; }
+function isDesk(){ return window.innerWidth >= 900; }
+function visible(el){ return !!(el && el.getClientRects().length); }
+
+/* ---------- the steps ---------- */
+var STEPS = [
+  { center:true, view:'home', welcome:true,
+    title:'Welcome to THE SYSTEM 👋',
+    body:'<p>This short tour (about 1 minute) shows you <b>where everything is</b> and <b>what you can do</b>.</p>'+
+         '<p>The idea is simple: do real, healthy things in your day — exercise, study, finish tasks — tick them off here, and watch your level grow, like a game.</p>'+
+         '<div class="tip">You cannot break anything. Just tap <b>Next</b>.</div>' },
+
+  { center:true, view:'home',
+    title:'Words you will see',
+    body:'<dl class="t-gloss">'+
+         '<dt>Hunter</dt><dd>That is you.</dd>'+
+         '<dt>XP</dt><dd>Points you earn for doing things.</dd>'+
+         '<dt>Level</dt><dd>Goes up as you collect XP.</dd>'+
+         '<dt>Rank</dt><dd>A grade from E (start) up to S (best).</dd>'+
+         '<dt>Gold ◆</dt><dd>Coins you earn. Spend them in the Store.</dd>'+
+         '<dt>Streak</dt><dd>How many days in a row you did your tasks.</dd>'+
+         '<dt>Boss</dt><dd>A bigger challenge you beat to reach the next Rank.</dd>'+
+         '</dl>' },
+
+  { view:'home', target:'#rankplate',
+    title:'Your level card',
+    body:'<p>This is <b>you</b>. It shows your <b>Rank</b> (the big letter), your <b>Level</b>, and a bar that fills as you earn XP.</p>'+
+         '<p>When the bar is full, you level up.</p>' },
+
+  { view:'home', target:'.sb-gold',
+    title:'Your Gold',
+    body:'<p>This is the Gold you have collected. You earn it by completing your tasks, and you can spend it in the <b>Store</b> tab.</p>' },
+
+  { view:'home', target:'#quest-area',
+    title:'Daily Quest — your main job each day',
+    body:'<p>Every day the app gives you a small list: exercises and/or a study session, matched to your level.</p>'+
+         '<p>Do them in real life, then tap here to mark them done. That earns XP, Gold and keeps your streak alive.</p>'+
+         '<div class="tip">Sunday is a <b>rest day</b> — no quest, and your streak is safe.</div>' },
+
+  { view:'home', target:'#schedule-panel',
+    title:'Plan Your Day',
+    body:'<p>An optional timetable. Tap <b>+ Add Block</b> to put things like “Study 6–7 PM” or “Walk 7–8 AM” into your day.</p>'+
+         '<p>The little <b>?</b> buttons next to it explain each option.</p>' },
+
+  { view:'home', target:'#todo-panel',
+    title:'To-Do List',
+    body:'<p>Your everyday task list. Type a task, choose how important it is (Low, Medium or High) and tap <b>Add</b>.</p>'+
+         '<p>When you finish a task, tick it — you earn XP for real things you get done.</p>' },
+
+  { view:'home', target:'#stat-grid',
+    title:'Your four stats',
+    body:'<p><b>Strength, Agility, Vitality and Sense.</b> Think of them as a scoreboard of your effort.</p>'+
+         '<p>They slowly rise as you exercise, study and focus. You do not need to do anything here — just watch them grow.</p>' },
+
+  { view:'home', target:'#split-panel',
+    title:'Today’s workout suggestion',
+    body:'<p>A ready-made workout for today, so you never have to wonder what to do.</p>'+
+         '<p>Don’t like it? Tap <b>Regenerate Split</b> for a different one. After you finish, tap <b>Log as Today’s Workout</b>.</p>' },
+
+  { view:'home', target:'.tabbar', noScroll:true,
+    deskTitle:'The menu on the left — how you move around',
+    title:'The bottom bar — how you move around',
+    body:'<p>These <b>7 buttons</b> are the main menu: <b>Home, Train, Boss, Focus, Store, Stats</b> and <b>Profile</b>.</p>'+
+         '<p>Tap any of them to switch screens. Let’s visit each one now.</p>' },
+
+  { view:'train', target:function(){ return panelOf('#log-activity'); },
+    title:'TRAIN — record your exercise',
+    body:'<p>Did a workout that is not in your Daily Quest? Pick it here, type how many, and tap <b>Log Activity</b> to earn XP.</p>'+
+         '<p>Scroll down on this screen to also find <b>Strength Benchmarks</b> (track your lifts) and <b>Custom Routines</b> (build your own workout).</p>' },
+
+  { view:'boss', target:'#boss-list', tall:true,
+    title:'BOSS — your big challenges',
+    body:'<p>Each Rank has one Boss. First you must reach the required level and stats; then you beat the Boss by doing a real-life challenge.</p>'+
+         '<p>Beating a Boss moves you up to the next Rank. Locked Bosses simply show what is still missing — there is no penalty.</p>' },
+
+  { view:'focus', target:function(){ return panelOf('#timer-start'); },
+    title:'FOCUS — a timer for study or work',
+    body:'<p>Choose 25, 45 or 60 minutes (or your own), tap <b>Start Focus</b>, and work without distractions.</p>'+
+         '<p>When the timer ends you earn XP and Gold.</p>' },
+
+  { view:'store', target:'#store-grid', tall:true,
+    title:'STORE — spend your Gold',
+    body:'<p>Buy gear such as weapons, armor and accessories. Each one gives a <b>real bonus</b> — for example extra XP or extra Gold.</p>'+
+         '<p>Tap an item to see what it does before you buy.</p>' },
+
+  { view:'stats', target:'#streak-row',
+    title:'STATS — see your progress',
+    body:'<p>This screen shows your last 7 days, your <b>achievements</b> (little badges you unlock), weekly charts and a place to log your body weight.</p>'+
+         '<p>A good place to check how well you are doing.</p>' },
+
+  { view:'profile', target:function(){ return panelOf('#role-select'); },
+    title:'PROFILE — your settings',
+    body:'<p>Here you can change your <b>Role</b>. Choose <b>Student</b> if you would rather study than run each day.</p>'+
+         '<p>Further down: your details (tap equipment or training days to change them) and optional <b>Cloud Sync</b> to use your account on another phone.</p>' },
+
+  { view:'profile', target:function(){ return panelOf('#export-data'); },
+    title:'Keep your progress safe',
+    body:'<p>Your progress is saved <b>on this device</b>. Tap <b>Export Backup</b> once in a while to download a copy.</p>'+
+         '<p>If you ever change phones, use <b>Import Backup</b> to bring it back.</p>'+
+         '<div class="tip">Do not tap <b>Reset System</b> unless you want to erase everything.</div>' },
+
+  { view:'home', target:'#tour-help-btn', pulse:true,
+    title:'Need help later?',
+    body:'<p>Tap this <b>Guide</b> button at the top any time to see this tour again.</p>' },
+
+  { center:true, view:'home', last:true,
+    title:'You are ready! 🎉',
+    body:'<p>A good first step: go to <b>Home</b> and complete today’s <b>Daily Quest</b>.</p>'+
+         '<p>Small steps every day add up. Take your time — there is no rush.</p>' }
+];
+
+/* ---------- state ---------- */
+var root=null, spot=null, card=null, spacer=null, idx=0, active=false, token=0;
+
+function build(){
+  root = document.createElement('div');
+  root.id = 'tour-root';
+  root.setAttribute('role','dialog');
+  root.setAttribute('aria-modal','true');
+  root.setAttribute('aria-labelledby','tour-title');
+  root.innerHTML = '<div id="tour-block"></div><div id="tour-spot"></div><div id="tour-card"></div>';
+  document.body.appendChild(root);
+  spot = root.querySelector('#tour-spot');
+  card = root.querySelector('#tour-card');
+  var blk = root.querySelector('#tour-block');
+  var stop = function(e){ e.preventDefault(); };
+  blk.addEventListener('wheel', stop, {passive:false});
+  blk.addEventListener('touchmove', stop, {passive:false});
+  card.addEventListener('click', onCardClick);
+}
+
+function goView(name){
+  var tab = document.querySelector('.tab[data-view="'+name+'"]');
+  if(tab && !tab.classList.contains('active')) tab.click();
+}
+
+function resolveTarget(step){
+  if(!step.target) return null;
+  var el = (typeof step.target === 'function') ? step.target() : $(step.target);
+  return visible(el) ? el : null;
+}
+
+function renderCard(step){
+  var total = STEPS.length;
+  var pct = Math.round(((idx+1)/total)*100);
+  var first = idx===0, last = idx===total-1;
+  var h = '';
+  h += '<div class="t-step">Step '+(idx+1)+' of '+total+'</div>';
+  h += '<div class="t-bar"><i style="width:'+pct+'%"></i></div>';
+  h += '<div class="t-title" id="tour-title">'+((isDesk() && step.deskTitle) || step.title)+'</div>';
+  h += '<div class="t-body" aria-live="polite">'+step.body+'</div>';
+  h += '<div class="t-actions">';
+  if(first){
+    h += '<button class="btn" data-act="skip">Not now</button>';
+    h += '<button class="btn primary" data-act="next">Start the tour →</button>';
+  } else {
+    h += '<button class="btn" data-act="back">← Back</button>';
+    h += '<button class="btn primary" data-act="'+(last?'finish':'next')+'">'+(last?'Finish ✓':'Next →')+'</button>';
+  }
+  h += '</div>';
+  if(!first && !last) h += '<button class="t-skip" data-act="skip">Skip the tour</button>';
+  card.innerHTML = h;
+  card.scrollTop = 0;
+  var primary = card.querySelector('.btn.primary');
+  if(primary) primary.focus({preventScroll:true});
+}
+
+function position(step, el){
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var cw = card.offsetWidth, ch = card.offsetHeight;
+  var pad = 6, gap = 14, edge = 12;
+  if(!el){
+    spot.className = 'center';
+    spot.style.cssText = 'top:'+(vh/2)+'px;left:'+(vw/2)+'px;width:0;height:0;';
+    card.style.left = Math.max(edge,(vw-cw)/2)+'px';
+    card.style.top  = Math.max(edge,(vh-ch)/2)+'px';
+    return;
+  }
+  var r = el.getBoundingClientRect();
+  if(vw >= 900){                                   // wide screen: put the card beside the highlight when there is room
+    var rightRoom = vw - r.right - pad - gap - edge, leftRoom = r.left - pad - gap - edge;
+    var side = rightRoom >= cw ? 'right' : (leftRoom >= cw ? 'left' : null);
+    if(side){
+      var t = Math.max(r.top, edge), bt = Math.min(r.bottom, vh-edge);
+      var sl = Math.max(4, r.left), sw = Math.min(r.width, vw-8);
+      spot.className = step.pulse ? 'pulse' : '';
+      spot.style.top = (t-pad)+'px'; spot.style.left = (sl-pad)+'px';
+      spot.style.width = (sw+pad*2)+'px'; spot.style.height = (Math.max(1, bt-t)+pad*2)+'px';
+      card.style.top = Math.min(Math.max(edge, t-pad), vh-ch-edge)+'px';
+      card.style.left = (side==='right' ? r.right+pad+gap : r.left-pad-gap-cw)+'px';
+      return;
+    }
+  }
+  var top = r.top, height = Math.min(r.height, vh*0.45);
+  var left = Math.max(4, r.left), width = Math.min(r.width, vw-8);
+  var aboveRoom = top - pad - gap - edge;
+  var cy;
+  if(top > vh*0.5 && aboveRoom >= ch){            // target sits low (e.g. bottom bar): card goes above it
+    cy = top - pad - gap - ch;
+  } else {                                        // otherwise card goes below; shrink a very tall highlight so both fit
+    var cap = vh - edge - ch - gap - pad - top;
+    height = Math.min(height, Math.max(60, cap));      // shrink tall highlights to fit the card, but never grow a small one
+    cy = top + height + pad + gap;
+  }
+  cy = Math.min(Math.max(edge, cy), vh-ch-edge);
+  spot.className = step.pulse ? 'pulse' : '';
+  spot.style.top = (top-pad)+'px';
+  spot.style.left = (left-pad)+'px';
+  spot.style.width = (width+pad*2)+'px';
+  spot.style.height = (height+pad*2)+'px';
+  card.style.top = cy+'px';
+  card.style.left = Math.min(Math.max(edge, left + width/2 - cw/2), vw-cw-edge)+'px';
+}
+
+function show(n){
+  idx = Math.max(0, Math.min(STEPS.length-1, n));
+  var step = STEPS[idx];
+  var my = ++token;
+  renderCard(step);
+  goView(step.view || 'home');
+  setTimeout(function(){
+    if(my!==token || !active) return;
+    var el = step.center ? null : resolveTarget(step);
+    if(el && !step.noScroll){
+      var absTop = el.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo(0, Math.max(0, absTop - (window.innerHeight < 520 ? 14 : 64)));   // put the target near the top so the card has room below
+    } else {
+      window.scrollTo(0, 0);
+    }
+    setTimeout(function(){
+      if(my!==token || !active) return;
+      position(step, step.center ? null : resolveTarget(step));
+    }, 90);
+  }, 140);
+}
+
+function reposition(){
+  if(!active) return;
+  var step = STEPS[idx];
+  position(step, step.center ? null : resolveTarget(step));
+}
+
+function onCardClick(e){
+  var b = e.target.closest('[data-act]');
+  if(!b) return;
+  var a = b.getAttribute('data-act');
+  if(a==='next') show(idx+1);
+  else if(a==='back') show(idx-1);
+  else if(a==='skip') close('skipped');
+  else if(a==='finish') close('done');
+}
+
+function onKey(e){
+  if(!active) return;
+  if(e.key==='Escape'){ close('skipped'); }
+  else if(e.key==='ArrowRight'){ if(idx<STEPS.length-1) show(idx+1); }
+  else if(e.key==='ArrowLeft'){ if(idx>0) show(idx-1); }
+}
+
+function open(){
+  if(active) return;
+  active = true;
+  if(!getFlag()) setFlag('seen');               // count it as seen the moment it appears, so a refresh/close mid-tour never brings it back
+  spacer = document.createElement('div');        // extra scroll room so the last sections can scroll up to the top while touring
+  spacer.style.cssText = 'height:75vh;pointer-events:none;';
+  document.body.appendChild(spacer);
+  build();
+  window.addEventListener('resize', reposition);
+  window.addEventListener('scroll', reposition, {passive:true});
+  document.addEventListener('keydown', onKey);
+  show(0);
+}
+
+function close(flag){
+  if(!active) return;
+  active = false; token++;
+  setFlag(flag || 'done');
+  window.removeEventListener('resize', reposition);
+  window.removeEventListener('scroll', reposition);
+  document.removeEventListener('keydown', onKey);
+  if(root && root.parentNode) root.parentNode.removeChild(root);
+  root = spot = card = null;
+  if(spacer && spacer.parentNode) spacer.parentNode.removeChild(spacer);
+  spacer = null;
+  goView('home');
+  window.scrollTo(0,0);
+}
+
+/* ---------- entry points ---------- */
+function bindButtons(){
+  var a = $('#tour-help-btn'); if(a) a.addEventListener('click', open);
+}
+
+/* Offer the tour once, when the app is actually showing (after onboarding,
+   splash, and any rank-up / penalty screens are out of the way). */
+function appReady(){
+  function hidden(e){ return !e || getComputedStyle(e).display==='none'; }
+  return hidden($('#onboarding')) && hidden($('#awaken')) && hidden($('#splash-screen')) &&
+         !$('#penalty-zone') && !$('.modal-bg') && !active;
+}
+function autoOffer(){
+  if(getFlag()) return;                       // already seen / skipped
+  var tries = 0;
+  var timer = setInterval(function(){
+    if(getFlag()){ clearInterval(timer); return; }
+    if(++tries > 4000){ clearInterval(timer); return; }
+    if(appReady()){
+      clearInterval(timer);
+      setTimeout(function(){ if(!getFlag() && appReady()) open(); }, 900);
+    }
+  }, 700);
+}
+
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ bindButtons(); autoOffer(); });
+else { bindButtons(); autoOffer(); }
+})();
+</script>
+
 </body>
 </html>
