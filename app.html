@@ -306,42 +306,107 @@ body{
 .row{ display:flex; gap:10px; }
 .pill{ font-family:var(--mono); font-size:10px; padding:4px 9px; border:1px solid var(--line-bright); color:var(--ink-dim); text-transform:uppercase; letter-spacing:.05em;}
 
-/* ---------- splash screen (home-screen launch only) ---------- */
+/* ---------- splash screen (home-screen launch only) ----------
+   A "system boot" sequence: emblem draws itself, radar ripples, scan line sweeps the
+   screen, title glitches now and then, and the load bar reports a live percentage. */
 #splash-screen{
-  position:fixed; inset:0; z-index:9999; background:var(--void);
+  position:fixed; inset:0; z-index:9999; background:var(--void); overflow:hidden;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   text-align:center; padding:40px 30px;
-  transition:opacity .5s ease;
+  transition:opacity .55s ease, transform .55s ease, filter .55s ease;
 }
-#splash-screen.fade-out{ opacity:0; pointer-events:none; }
-.splash-badge{
-  width:88px; height:88px; border:2px solid var(--blue); margin-bottom:24px;
-  clip-path: polygon(15% 0,85% 0,100% 15%,100% 85%,85% 100%,15% 100%,0 85%,0 15%);
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 0 30px -4px var(--blue-glow);
-  animation: splashPulse 2s ease-in-out infinite;
+#splash-screen.fade-out{ opacity:0; transform:scale(1.08); filter:blur(3px); pointer-events:none; }
+/* faint grid + soft glow behind the emblem */
+#splash-screen::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 520px 420px at 50% 42%, rgba(91,140,255,.13), transparent 70%),
+    linear-gradient(rgba(91,140,255,.05) 1px, transparent 1px) 0 0/44px 44px,
+    linear-gradient(90deg, rgba(91,140,255,.05) 1px, transparent 1px) 0 0/44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 45%, #000 20%, transparent 75%);
+          mask-image:radial-gradient(ellipse 70% 60% at 50% 45%, #000 20%, transparent 75%);
+  animation: splashFadeIn 1.2s ease both;
 }
-.splash-badge svg{ width:42px; height:42px; }
-@keyframes splashPulse{ 0%,100%{box-shadow:0 0 30px -4px var(--blue-glow);} 50%{box-shadow:0 0 44px -2px var(--blue-glow);} }
-.splash-title{ font-family:var(--mono); font-size:13px; letter-spacing:.3em; color:var(--ink-dim); text-transform:uppercase; margin-bottom:36px;}
+/* scan line sweeping top to bottom */
+#splash-screen::after{
+  content:''; position:absolute; left:0; right:0; top:0; height:120px; pointer-events:none;
+  background:linear-gradient(180deg, transparent, rgba(91,140,255,.10) 55%, rgba(91,140,255,.28) 100%);
+  border-bottom:1px solid rgba(91,140,255,.35);
+  animation: splashScan 4.6s cubic-bezier(.4,0,.6,1) infinite;
+  transform:translateY(-130px);
+}
+@keyframes splashScan{ 0%{ transform:translateY(-130px); } 70%,100%{ transform:translateY(100vh); } }
+@keyframes splashFadeIn{ from{opacity:0;} to{opacity:1;} }
+
+.splash-badge{ width:96px; height:96px; margin-bottom:26px; position:relative; z-index:1; }
+.splash-badge svg{ width:100%; height:100%; overflow:visible; display:block; }
+.sb-oct{ fill:rgba(91,140,255,.06); stroke:var(--blue); stroke-width:2; stroke-linejoin:round;
+  stroke-dasharray:1; stroke-dashoffset:1; animation: splashDraw 1.1s .15s cubic-bezier(.5,0,.2,1) forwards,
+                                                       splashGlow 2.4s 1.4s ease-in-out infinite; }
+.sb-star{ fill:none; stroke:var(--blue); stroke-width:2; stroke-linejoin:round; stroke-linecap:round;
+  stroke-dasharray:1; stroke-dashoffset:1; animation: splashDraw .9s .9s cubic-bezier(.5,0,.2,1) forwards,
+                                                      splashStarFill .6s 1.7s ease forwards; }
+.sb-ring{ fill:none; stroke:var(--blue); stroke-width:.8; stroke-dasharray:2 5; opacity:0;
+  transform-origin:50px 50px; animation: splashFadeIn .8s 1.2s forwards, splashSpin 16s 1.2s linear infinite; }
+.sb-ripple{ fill:none; stroke:var(--blue); stroke-width:1; opacity:0; transform-origin:50px 50px;
+  animation: splashRipple 2.8s 1.6s ease-out infinite; }
+.sb-ripple.r2{ animation-delay:2.99s; }
+@keyframes splashDraw{ to{ stroke-dashoffset:0; } }
+@keyframes splashStarFill{ to{ fill:rgba(91,140,255,.35); } }
+@keyframes splashSpin{ to{ transform:rotate(360deg); } }
+@keyframes splashRipple{ 0%{ opacity:.55; transform:scale(.9); } 100%{ opacity:0; transform:scale(1.9); } }
+@keyframes splashGlow{ 0%,100%{ filter:drop-shadow(0 0 4px var(--blue-glow)); } 50%{ filter:drop-shadow(0 0 14px var(--blue-glow)); } }
+
+.splash-title{
+  font-family:var(--mono); font-size:13px; letter-spacing:.3em; color:var(--ink-dim); text-transform:uppercase; margin-bottom:36px;
+  position:relative; z-index:1; animation: splashTitleIn 1.3s .5s cubic-bezier(.2,.8,.2,1) both;
+}
+.splash-title::before, .splash-title::after{
+  content:attr(data-text); position:absolute; inset:0; opacity:0; pointer-events:none;
+}
+.splash-title::before{ color:#ff5b8c; animation: splashGlitchA 5s 2.2s infinite steps(1); }
+.splash-title::after { color:#5bf0ff; animation: splashGlitchB 5s 2.2s infinite steps(1); }
+@keyframes splashTitleIn{ from{ opacity:0; letter-spacing:.7em; filter:blur(4px); } to{ opacity:1; letter-spacing:.3em; filter:none; } }
+@keyframes splashGlitchA{ 0%,90%,100%{ opacity:0; transform:none; } 91%{ opacity:.8; transform:translate(-3px,0); clip-path:inset(10% 0 55% 0); } 93%{ opacity:.8; transform:translate(2px,0); clip-path:inset(60% 0 8% 0); } 95%{ opacity:0; } }
+@keyframes splashGlitchB{ 0%,90%,100%{ opacity:0; transform:none; } 92%{ opacity:.8; transform:translate(3px,0); clip-path:inset(50% 0 15% 0); } 94%{ opacity:.8; transform:translate(-2px,0); clip-path:inset(5% 0 62% 0); } 96%{ opacity:0; } }
+
 .splash-quote{
   font-family:var(--mono); font-size:14px; color:var(--ink); line-height:1.7; min-height:64px;
   display:flex; align-items:center; justify-content:center; max-width:320px;
-  transition:opacity .4s ease;
+  transition:opacity .4s ease, transform .4s ease; position:relative; z-index:1;
 }
-.splash-quote.fade{ opacity:0; }
-.splash-loadbar{ width:160px; height:3px; background:var(--line); margin-top:30px; overflow:hidden; position:relative;}
-.splash-loadbar i{ position:absolute; inset:0; width:0%; background:linear-gradient(90deg,var(--blue),var(--violet)); box-shadow:0 0 8px var(--blue-glow); transition:width linear;}
-.splash-credit{ position:absolute; bottom:28px; left:0; right:0; text-align:center; font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); letter-spacing:.05em;}
+.splash-quote.fade{ opacity:0; transform:translateY(6px); }
+
+.splash-load{ width:160px; margin-top:30px; position:relative; z-index:1; }
+.splash-loadbar{ width:100%; height:3px; background:var(--line); overflow:hidden; position:relative; }
+.splash-loadbar i{ position:absolute; inset:0; width:0%; background:linear-gradient(90deg,var(--blue),var(--violet)); box-shadow:0 0 8px var(--blue-glow); transition:width linear; }
+.splash-loadbar i::after{ content:''; position:absolute; top:0; bottom:0; right:0; width:26px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.85)); }
+.splash-meta{ display:flex; justify-content:space-between; margin-top:9px; font-family:var(--mono); font-size:9.5px; letter-spacing:.18em; color:var(--ink-faint); text-transform:uppercase; }
+.splash-meta b{ color:var(--blue); font-weight:600; font-variant-numeric:tabular-nums; }
+
+.splash-credit{ position:absolute; bottom:28px; left:0; right:0; text-align:center; font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); letter-spacing:.05em; }
+
+/* drifting embers */
+.sp-mote{ position:absolute; bottom:-10px; width:3px; height:3px; border-radius:50%; background:var(--blue); box-shadow:0 0 6px var(--blue-glow);
+  opacity:0; animation: splashMote linear infinite; z-index:0; }
+@keyframes splashMote{ 0%{ transform:translateY(0); opacity:0; } 12%{ opacity:.7; } 85%{ opacity:.4; } 100%{ transform:translateY(-105vh); opacity:0; } }
 
 /* splash: scale up on laptop/desktop so the installed app doesn't show a tiny phone-sized splash */
 @media (min-width:900px){
-  .splash-badge{ width:130px; height:130px; margin-bottom:34px; }
-  .splash-badge svg{ width:62px; height:62px; }
+  .splash-badge{ width:150px; height:150px; margin-bottom:34px; }
   .splash-title{ font-size:18px; margin-bottom:48px; }
   .splash-quote{ font-size:22px; max-width:640px; min-height:90px; }
-  .splash-loadbar{ width:280px; height:4px; margin-top:44px; }
+  .splash-load{ width:320px; margin-top:44px; }
+  .splash-loadbar{ height:4px; }
+  .splash-meta{ font-size:11px; margin-top:11px; }
   .splash-credit{ font-size:13px; bottom:36px; }
+}
+@media (prefers-reduced-motion:reduce){
+  #splash-screen::after, .sp-mote, .sb-ring, .sb-ripple, .splash-title::before, .splash-title::after{ display:none; }
+  .sb-oct, .sb-star{ animation:none; stroke-dashoffset:0; }
+  .sb-star{ fill:rgba(91,140,255,.35); }
+  .splash-title{ animation:none; }
+  #splash-screen.fade-out{ transform:none; filter:none; }
 }
 
 /* ---------- footer credit label (shown inside the app) ---------- */
@@ -610,6 +675,57 @@ body{
   #tour-card .t-skip{ margin-top:0; padding:4px; }
 }
 
+/* ---------- motion polish ----------
+   Deliberately limited to moments that mean something (switching tabs, levelling,
+   ranking up, clearing a quest, a penalty). Nothing loops in the background. All of it
+   switches off for anyone who prefers reduced motion. Works the same on phone and desktop. */
+@keyframes rise{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+/* cards glide in one after another when a tab opens (backwards = no lingering transform) */
+.view.active > :not(.dcol), .view.active .dcol > *{ animation: rise .42s cubic-bezier(.22,.9,.34,1) backwards; }
+.view.active > :nth-child(2), .view.active .dcol > :nth-child(2){ animation-delay:.05s; }
+.view.active > :nth-child(3), .view.active .dcol > :nth-child(3){ animation-delay:.10s; }
+.view.active > :nth-child(4), .view.active .dcol > :nth-child(4){ animation-delay:.15s; }
+.view.active > :nth-child(5), .view.active .dcol > :nth-child(5){ animation-delay:.20s; }
+.view.active > :nth-child(6), .view.active .dcol > :nth-child(6){ animation-delay:.24s; }
+.view.active > :nth-child(n+7), .view.active .dcol > :nth-child(n+7){ animation-delay:.28s; }
+
+/* level gained: the LV number pops gold and the XP bar flares */
+@keyframes lvlPop{ 0%{ transform:scale(1);} 35%{ transform:scale(1.7); color:var(--gold); text-shadow:0 0 12px var(--gold);} 100%{ transform:scale(1);} }
+@keyframes xpFlash{ 0%,100%{ filter:none; } 35%{ filter:brightness(1.9) drop-shadow(0 0 7px var(--blue)); } }
+#lvl-num.pop{ display:inline-block; animation: lvlPop .95s cubic-bezier(.22,1.1,.36,1); }
+.xpbar.flash{ animation: xpFlash .95s ease-out; }
+/* rank changed: the badge thumps once */
+@keyframes rankThump{ 0%{ transform:scale(1); } 30%{ transform:scale(1.28); filter:brightness(1.6); } 100%{ transform:scale(1); filter:none; } }
+.rank-badge.thump{ animation: rankThump .8s cubic-bezier(.22,1.1,.36,1); }
+
+/* quest cleared: a green pulse ring leaves the card */
+@keyframes questCleared{ 0%{ box-shadow:0 0 0 0 rgba(61,220,151,.6); border-color:var(--good); } 100%{ box-shadow:0 0 0 26px rgba(61,220,151,0); } }
+.quest-card.cleared{ animation: questCleared 1s ease-out; }
+
+/* rank-up / boss defeated: letter slams in, shockwave ring rolls out */
+@keyframes rankSlam{ 0%{ opacity:0; transform:scale(2.8); filter:blur(7px); } 60%{ opacity:1; transform:scale(.9); filter:none; } 100%{ transform:scale(1); } }
+@keyframes iconPop{ 0%{ opacity:0; transform:scale(.2) rotate(-20deg); } 65%{ opacity:1; transform:scale(1.25) rotate(6deg); } 100%{ transform:scale(1) rotate(0); } }
+@keyframes burst{ 0%{ opacity:.9; width:14px; height:14px; } 100%{ opacity:0; width:720px; height:720px; } }
+.rankup-card .rankup-rank{ animation: rankSlam .75s .2s cubic-bezier(.2,1.3,.4,1) backwards; }
+.rankup-card .boss-victory-icon{ display:inline-block; animation: iconPop .8s .15s cubic-bezier(.2,1.3,.4,1) backwards; }
+.rank-burst{ position:absolute; left:50%; top:var(--by,96px); width:14px; height:14px; transform:translate(-50%,-50%); box-sizing:border-box; border:2px solid var(--rk,var(--blue)); border-radius:50%; pointer-events:none; opacity:0; animation: burst 1.3s .3s ease-out forwards; }
+.rank-burst.b2{ animation-delay:.5s; border-width:1px; }
+
+/* penalty / rank loss: the screen jolts and the edges flash red */
+@keyframes cardShake{ 0%,100%{ transform:translateX(0); } 15%,55%{ transform:translateX(-7px); } 35%,75%{ transform:translateX(7px); } }
+@keyframes penFlash{ 0%{ opacity:0; } 15%{ opacity:1; } 100%{ opacity:0; } }
+.rankup-card.down{ animation: modalCardIn .3s cubic-bezier(.22,1.1,.36,1), cardShake .45s .3s; }
+.pen-flash{ position:fixed; inset:0; z-index:240; pointer-events:none; background:radial-gradient(ellipse at center, transparent 35%, rgba(255,60,90,.5) 100%); animation: penFlash 1.3s ease-out forwards; }
+#app.shake{ animation: cardShake .45s; }
+
+@media (prefers-reduced-motion:reduce){
+  .view.active > :not(.dcol), .view.active .dcol > *{ animation:none; }
+  #lvl-num.pop, .xpbar.flash, .rank-badge.thump, .quest-card.cleared, #app.shake, .pen-flash,
+  .rankup-card .rankup-rank, .rankup-card .boss-victory-icon, .rank-burst{ animation:none; }
+  .rankup-card.down{ animation:none; }
+  .rank-burst{ display:none; }
+}
+
 /* =====================================================================
    WIDE-SCREEN / DESKTOP LAYOUT (added) — only applies at >= 900px wide.
    Phones and small tablets keep the original layout untouched.
@@ -792,14 +908,24 @@ body{
 <div id="toast-layer"></div>
 
 <!-- ============ SPLASH SCREEN (home-screen launches only) ============ -->
-<div id="splash-screen" style="display:none;">
+<div id="splash-screen" style="display:none;" aria-hidden="true">
   <div class="splash-badge">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#5b8cff" stroke-width="2"><path d="M12 2l2.5 5 5.5.8-4 4 1 5.5L12 14.5 7 17.3l1-5.5-4-4 5.5-.8z"/></svg>
+    <svg viewBox="0 0 100 100" fill="none">
+      <circle class="sb-ripple" cx="50" cy="50" r="48"/>
+      <circle class="sb-ripple r2" cx="50" cy="50" r="48"/>
+      <circle class="sb-ring" cx="50" cy="50" r="58"/>
+      <path class="sb-oct" pathLength="1" d="M15 0H85L100 15V85L85 100H15L0 85V15Z"/>
+      <path class="sb-star" pathLength="1" transform="translate(26 26) scale(2)" d="M12 2l2.5 5 5.5.8-4 4 1 5.5L12 14.5 7 17.3l1-5.5-4-4 5.5-.8z"/>
+    </svg>
   </div>
-  <div class="splash-title">THE SYSTEM</div>
+  <div class="splash-title" data-text="THE SYSTEM">THE SYSTEM</div>
   <div class="splash-quote" id="splash-quote">Loading...</div>
-  <div class="splash-loadbar"><i id="splash-loadbar-fill"></i></div>
+  <div class="splash-load">
+    <div class="splash-loadbar"><i id="splash-loadbar-fill"></i></div>
+    <div class="splash-meta"><span id="splash-stage">Booting</span><b id="splash-pct">0%</b></div>
+  </div>
   <div class="splash-credit">made by dev4vr4th &amp; Claude</div>
+</div>
 </div>
 <div id="app">
 
@@ -1030,6 +1156,17 @@ body{
       <p style="font-size:11.5px; color:var(--ink-dim); line-height:1.5;">
         Student role swaps the daily run for a Study Session, and removes running from the workout logger — built for tight schedules and staying home. Boss fights that would require running ask for an equivalent study task instead.
       </p>
+      <div class="profile-row" style="margin-top:12px; border-bottom:none; align-items:center;">
+        <span>Sound effects</span>
+        <button class="btn" id="sound-toggle" type="button" role="switch" aria-checked="true" aria-label="Sound effects" style="padding:7px 14px; font-size:11px;">On</button>
+      </div>
+      <div class="profile-row" style="border-bottom:none; align-items:center;">
+        <span>Timer ticking</span>
+        <button class="btn" id="tick-toggle" type="button" role="switch" aria-checked="false" aria-label="Focus timer ticking" style="padding:7px 14px; font-size:11px;">Off</button>
+      </div>
+      <p style="font-size:11.5px; color:var(--ink-dim); line-height:1.5;">
+        Sounds play for big moments (quests, levelling, ranks, boss fights, finished timers, achievements, purchases), when you log a workout or exercise, and as a very soft click on buttons. Timer ticking is optional and off by default; the last 5 seconds of a focus session always count down with short beeps.
+      </p>
     </div>
 
     <div class="section-title"><span class="t">Hunter Profile</span></div>
@@ -1189,9 +1326,69 @@ body{
   <button class="btn primary" id="awaken-enter">Enter the System</button>
 </div>
 
+<script src="./sfx.js"></script>
 <script>
 (function(){
 "use strict";
+// Sound is optional polish: if sfx.js ever fails to load, the app must behave exactly as before.
+function sfx(name, delay){ try{ if(window.SFX) window.SFX.play(name, delay); }catch(e){} }
+// Re-triggerable one-shot CSS animation: adds a class, removes it again when done.
+function fx(el, cls, ms){
+  if(!el) return;
+  el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+  setTimeout(()=> el.classList.remove(cls), ms || 1200);
+}
+(function wireSoundToggle(){
+  const btn = document.getElementById('sound-toggle');
+  if(!btn) return;
+  if(!window.SFX){ btn.closest('.profile-row').style.display = 'none'; return; }   // engine missing: hide the control
+  function paint(){
+    const on = window.SFX.enabled();
+    btn.textContent = on ? 'On' : 'Off';
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+    btn.style.color = on ? 'var(--blue)' : '';
+    btn.style.borderColor = on ? 'var(--blue)' : '';
+  }
+  btn.addEventListener('click', ()=>{
+    window.SFX.setEnabled(!window.SFX.enabled());
+    paint();
+    if(window.SFX.enabled()) window.SFX.play('ping');   // lets you hear that it's on
+  });
+  paint();
+})();
+
+// Soft click on buttons. Delegated, so it covers buttons rendered later too. It is the lowest
+// priority sound: when a tap also triggers a real event sound (quest, log, tick, purchase...),
+// that one plays and the click stays silent.
+document.addEventListener('click', (e)=>{
+  const el = e.target.closest && e.target.closest('button, .btn, .tab, .choice, .preset-chip, .q-check, [role="button"]');
+  if(!el || el.disabled || el.getAttribute('aria-disabled') === 'true') return;
+  if(el.closest('#splash-screen')) return;
+  sfx('click');
+});
+
+// Focus-timer ticking. Constant ticking for 25-60 minutes gets old fast, so it is OFF by default
+// (saved on this device only). The last-5-seconds countdown beeps are always on.
+const TICK_KEY = 'the-system-timer-tick';
+function timerTickEnabled(){ try{ return localStorage.getItem(TICK_KEY) === '1'; }catch(e){ return false; } }
+(function wireTickToggle(){
+  const btn = document.getElementById('tick-toggle');
+  if(!btn) return;
+  if(!window.SFX){ btn.closest('.profile-row').style.display = 'none'; return; }
+  function paint(){
+    const on = timerTickEnabled();
+    btn.textContent = on ? 'On' : 'Off';
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+    btn.style.color = on ? 'var(--blue)' : '';
+    btn.style.borderColor = on ? 'var(--blue)' : '';
+  }
+  btn.addEventListener('click', ()=>{
+    try{ localStorage.setItem(TICK_KEY, timerTickEnabled() ? '0' : '1'); }catch(e){}
+    paint();
+    if(timerTickEnabled()) sfx('tock');
+  });
+  paint();
+})();
 
 /* ======================= DATA LAYER ======================= */
 const SAVE_KEY = "solo_system_save_v1";
@@ -1502,6 +1699,7 @@ function checkAchievements(){
     save();
     newlyUnlocked.forEach((ach,i)=>{
       setTimeout(()=> toast(`<b>ACHIEVEMENT UNLOCKED</b><br>${ach.icon} ${ach.name}`, 'gold'), i*600);
+      sfx('achievement', 0.5 + i*0.6);
     });
   }
 }
@@ -1560,6 +1758,7 @@ document.getElementById('ob-next').addEventListener('click', ()=>{
 
   document.getElementById('onboarding').style.display='none';
   document.getElementById('awaken').style.display='flex';
+  sfx('awaken');
 });
 document.getElementById('ob-back').addEventListener('click', ()=>{ if(obIndex>0){ obIndex--; showObStep(obIndex); } });
 document.getElementById('awaken-enter').addEventListener('click', ()=>{
@@ -1826,9 +2025,11 @@ function claimQuest(){
   state.penaltyActive = false;
 
   toast(`<b>QUEST CLEARED</b><br>+${grantedXp} XP · +${grantedGold} Gold`);
+  sfx('quest');
   save();
   checkAchievements();
   renderAll();
+  fx(document.querySelector('#quest-area .quest-card'), 'cleared', 1100);
 }
 
 // Daily XP cap: this is the actual time-gate. No matter how much you log in one day —
@@ -1894,12 +2095,17 @@ function xpNeededForLevel(level){ return 200 + (level-1)*40; }
 function addXP(amount){
   state.xp += amount;
   let xpNeeded = xpNeededForLevel(state.level);
+  let leveledUp = false;
   while(state.xp >= xpNeeded){
     state.xp -= xpNeeded;
     state.level++;
+    leveledUp = true;
     xpNeeded = xpNeededForLevel(state.level);
     checkRankUp();
   }
+  // Slight delay so it lands after the "quest cleared" chime instead of on top of it.
+  // If this level also raised the rank, the louder rank-up sound wins and this is skipped.
+  if(leveledUp) sfx('levelup', 0.6);
   save();
 }
 function checkRankUp(){
@@ -1934,6 +2140,7 @@ function showRankModal(rank, isUp){
   bg.innerHTML = `
     <div class="rankup-card ${isUp?'':'down'}" style="--rk:${rankColorVar(rank)}">
       <div class="tick-bl"></div><div class="tick-br"></div>
+      ${isUp ? '<div class="rank-burst"></div><div class="rank-burst b2"></div>' : ''}
       <div class="rankup-eyebrow">${isUp ? 'Rank Up' : 'Rank Down'}</div>
       <div class="rankup-rank">${rank}</div>
       <div class="rankup-name">${RANK_TITLES[rank]}</div>
@@ -1941,6 +2148,7 @@ function showRankModal(rank, isUp){
       <button class="btn ${isUp?'':'primary'} full" id="rankmodal-close">Continue</button>
     </div>`;
   document.body.appendChild(bg);
+  if(isUp) sfx('rankup');   // demotions are voiced by triggerPenalty, so not twice
   if(isUp){
     document.getElementById('rankmodal-share').addEventListener('click', shareCurrentStats);
   }
@@ -2001,6 +2209,9 @@ function triggerPenalty(){
     demoted = true;
   }
   state._lastPenaltyLoss = { xpLoss, goldLoss, demoted };
+  sfx('rankdown');
+  fx(document.getElementById('app'), 'shake', 500);
+  const flash = document.createElement('div'); flash.className = 'pen-flash'; document.body.appendChild(flash); setTimeout(()=> flash.remove(), 1400);
   save();
   renderPenaltyZone();
   if(demoted){
@@ -2080,6 +2291,7 @@ function startBossFight(bossId){
   save();
   renderBossArena();
   toast(`<b>BOSS FIGHT BEGUN</b><br>${boss.name} awaits.`);
+  sfx('bossStart');
 }
 function cancelBossFight(){
   state.activeBossFight = null;
@@ -2111,7 +2323,7 @@ function creditBossProgress(activityName, amount){
       (activityName==='Focus session' && (q.name==='Focus session' || q.name==='Study Session'));
     if(matches && amount >= q.target){ q.done = true; changed = true; }
   });
-  if(changed){ save(); toast('<b>BOSS PROGRESS</b><br>A finishing-blow task was completed.'); }
+  if(changed){ save(); toast('<b>BOSS PROGRESS</b><br>A finishing-blow task was completed.'); sfx('ping'); }
 }
 
 function finishBossFight(){
@@ -2369,8 +2581,9 @@ function showBossVictoryModal(boss, xpGain, goldGain){
   bg.className = 'modal-bg';
   bg.id = 'boss-defeat-modal';
   bg.innerHTML = `
-    <div class="rankup-card" style="--rk:${boss.color}">
+    <div class="rankup-card" style="--rk:${boss.color}; --by:62px">
       <div class="tick-bl"></div><div class="tick-br"></div>
+      <div class="rank-burst"></div><div class="rank-burst b2"></div>
       <div class="boss-victory-icon">${boss.icon}</div>
       <div class="rankup-eyebrow">Boss Defeated</div>
       <div class="rankup-rank" style="font-size:26px;">${boss.name}</div>
@@ -2380,6 +2593,7 @@ function showBossVictoryModal(boss, xpGain, goldGain){
       <button class="btn full" id="bossmodal-close">Continue</button>
     </div>`;
   document.body.appendChild(bg);
+  sfx('victory');
   document.getElementById('bossmodal-share').addEventListener('click', ()=> shareBossVictory(boss));
   document.getElementById('bossmodal-close').addEventListener('click', ()=>{ bg.remove(); renderAll(); });
 }
@@ -2624,7 +2838,7 @@ function showTargetedWorkoutModal(groups){
     state.targetedWorkoutLoggedDate = todayStr();
     save();
     bg.remove();
-    toast(`<b>WORKOUT LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`);
+    toast(`<b>WORKOUT LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`); sfx('log');
     checkAchievements();
     renderHud();
     renderDailyCapNote();
@@ -2711,7 +2925,7 @@ function logTodaysWorkout(){
   const grantedGold = addGoldCapped(goldGain);
   state.splitLoggedDate = todayStr();
   save();
-  toast(`<b>WORKOUT LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`);
+  toast(`<b>WORKOUT LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`); sfx('log');
   checkAchievements();
   renderSplit();
   renderHud();
@@ -2758,6 +2972,7 @@ function toggleTodo(id){
   t.xpGranted = granted;
   if(granted > 0) toast(`<b>TASK COMPLETE</b><br>+${granted} XP`);
   else toast('Daily task XP limit reached — task marked complete', 'danger');
+  sfx('tick');
   checkAchievements();
   renderHud();
   renderDailyCapNote();
@@ -3433,7 +3648,7 @@ document.getElementById('log-submit').addEventListener('click', ()=>{
   const grantedXp = addXPCapped(xpGain);
   const grantedGold = addGoldCapped(goldGain);
   save();
-  toast(`<b>LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`);
+  toast(`<b>LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`); sfx('log');
   document.getElementById('log-amount').value = '';
   document.getElementById('log-sets').value = '';
   checkAchievements();
@@ -3518,7 +3733,7 @@ function renderCustomRoutines(){
       const grantedXp = addXPCapped(xpGain);
       const grantedGold = addGoldCapped(goldGain);
       save();
-      toast(`<b>WORKOUT LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`);
+      toast(`<b>WORKOUT LOGGED</b><br>+${grantedXp} XP · +${grantedGold} Gold`); sfx('log');
       checkAchievements();
       renderAll();
     });
@@ -3592,6 +3807,7 @@ function renderStore(){
         if(state.gold < item.price){ toast('Not enough gold', 'danger'); return; }
         state.gold -= item.price;
         state.inventory.push(id);
+        sfx('coin');
         if(item.bonus.type === 'statCap'){
           state.statCapBonusPerStat = state.statCapBonusPerStat || {};
           state.statCapBonusPerStat[item.bonus.stat] = (state.statCapBonusPerStat[item.bonus.stat]||0) + item.bonus.value;
@@ -3648,6 +3864,16 @@ function breakMinutesForSession(sessionMinutes){
   if(sessionMinutes <= 60) return 20;
   return Math.min(30, Math.round(sessionMinutes*0.33));
 }
+
+// Called once a second while a session runs. Only focus sessions make sound, and only while the
+// app is on screen: an optional soft tick, plus countdown beeps for the final 5 seconds.
+function timerSecondCue(){
+  if(!timerRunning || timerMode !== 'focus' || document.visibilityState !== 'visible') return;
+  if(timerSecondsLeft <= 0) return;
+  if(timerSecondsLeft <= 5) sfx('count');
+  else if(timerTickEnabled()) sfx('tock');
+}
+function timerIntervalFn(){ timerTick(); timerSecondCue(); }
 
 function timerTick(){
   if(!timerRunning || timerEndsAt === null) return;
@@ -3738,7 +3964,7 @@ document.getElementById('timer-start').addEventListener('click', ()=>{
     document.getElementById('timer-start').textContent = 'Pause Break';
     document.getElementById('timer-reset').style.display = 'block';
     document.getElementById('timer-mode-label').textContent = 'ON BREAK — RECHARGE';
-    timerInterval = setInterval(timerTick, 1000);
+    timerInterval = setInterval(timerIntervalFn, 1000);
     return;
   }
   if(timerMode === 'break'){
@@ -3747,7 +3973,7 @@ document.getElementById('timer-start').addEventListener('click', ()=>{
     timerEndsAt = Date.now() + timerSecondsLeft*1000;
     document.getElementById('timer-start').textContent = 'Pause Break';
     document.getElementById('timer-mode-label').textContent = 'ON BREAK — RECHARGE';
-    timerInterval = setInterval(timerTick, 1000);
+    timerInterval = setInterval(timerIntervalFn, 1000);
     return;
   }
   timerMode = 'focus';
@@ -3759,7 +3985,7 @@ document.getElementById('timer-start').addEventListener('click', ()=>{
   document.getElementById('timer-presets').style.opacity = '0.4';
   document.getElementById('timer-presets').style.pointerEvents = 'none';
   document.getElementById('timer-custom-input').disabled = true;
-  timerInterval = setInterval(timerTick, 1000);
+  timerInterval = setInterval(timerIntervalFn, 1000);
 });
 document.getElementById('timer-reset').addEventListener('click', ()=>{
   if(timerMode === 'break' || timerMode === 'breakPending'){
@@ -3800,6 +4026,7 @@ function offerBreak(breakMinutes){
 }
 function completeBreakSession(){
   toast('<b>BREAK COMPLETE</b><br>Back to it — nice reset.');
+  sfx('timer');
   resetTimerToFocusIdle();
 }
 // Returns the timer to the normal Focus Session idle state — used after a break completes,
@@ -3856,6 +4083,7 @@ function completeFocusSession(){
   save();
   const earnedBreak = breakMinutesForSession(minutes);
   toast(`<b>FOCUS COMPLETE</b><br>${minutes} min · +${grantedXp} XP · +${grantedGold} Gold${senGained ? ' · +1 Sense' : ''}<br>+${earnedBreak} min break earned`);
+  sfx('timer');
   offerBreak(earnedBreak);
   checkAchievements();
   renderFocusLog();
@@ -3955,7 +4183,7 @@ document.getElementById('weight-log').addEventListener('click', ()=>{
   save();
   document.getElementById('weight-input').value='';
   renderStatsView();
-  toast('Weight logged');
+  toast('Weight logged'); sfx('log');
 });
 
 function renderAchievements(){
@@ -4146,6 +4374,7 @@ document.getElementById('wipe-data').addEventListener('click', ()=>{
 });
 
 /* ======================= HUD ======================= */
+const hudLast = { level:null, rank:null };
 function renderHud(){
   document.getElementById('hud-name').textContent = state.profile.name.toUpperCase();
   document.getElementById('hud-gold').textContent = state.gold;
@@ -4155,6 +4384,12 @@ function renderHud(){
   document.getElementById('rank-title-name').textContent = RANK_TITLES[state.rank];
   document.getElementById('rank-sub').textContent = `Rank ${state.rank} · Awakened`;
   document.getElementById('lvl-num').textContent = 'LV ' + state.level;
+  if(hudLast.level !== null && state.level > hudLast.level){
+    fx(document.getElementById('lvl-num'), 'pop', 1000);
+    fx(document.querySelector('.xpbar'), 'flash', 1000);
+  }
+  if(hudLast.rank !== null && state.rank !== hudLast.rank) fx(document.getElementById('rank-badge'), 'thump', 900);
+  hudLast.level = state.level; hudLast.rank = state.rank;
   const xpNeeded = xpNeededForLevel(state.level);
   document.getElementById('xp-fill').style.setProperty('--pct', clamp(state.xp/xpNeeded*100,0,100)+'%');
   document.getElementById('xp-num').textContent = `${state.xp}/${xpNeeded}`;
@@ -4227,14 +4462,12 @@ function isStandaloneLaunch(){
 // time to actually be read, not just flashed past. This is a deliberate, slow pace:
 // the goal is for the person to actually read these, especially the integrity line,
 // not just see a loading animation.
+// Kept short on purpose (about 4s of messages, ~5s total with the fade): this screen shows on
+// every launch of the installed app, so it should feel like an entrance, not a wait.
 const SPLASH_MESSAGES = [
-  { text: "The weak have no choice. The strong choose.", duration: 2600 },
-  { text: "Arise.", duration: 1400 },
-  { text: "Every rep logged is a step out of E-Rank.", duration: 2600 },
-  { text: "The System does not wait for motivation.", duration: 2400 },
-  { text: "If you edit your progress, you're only fooling yourself.", duration: 2800 },
-  { text: "Enjoying the grind? Buy dev4vr4th a coffee ☕", duration: 2400 },
-  { text: "Loading the Hunter's Association...", duration: 1600 }
+  { text: "The weak have no choice. The strong choose.", duration: 1300 },
+  { text: "If you edit your progress, you're only fooling yourself.", duration: 1800 },
+  { text: "Arise.", duration: 900 }
 ];
 
 function runSplashScreen(onDone){
@@ -4242,10 +4475,39 @@ function runSplashScreen(onDone){
   const quoteEl = document.getElementById('splash-quote');
   const barEl = document.getElementById('splash-loadbar-fill');
   splash.style.display = 'flex';
+  sfx('boot');   // silent wherever the browser blocks audio before a first tap; plays in installed Chrome apps
 
   const totalDuration = SPLASH_MESSAGES.reduce((sum, m) => sum + m.duration, 0);
   barEl.style.transition = `width ${totalDuration}ms linear`;
-  requestAnimationFrame(()=>{ barEl.style.width = '100%'; });
+  barEl.style.width = '0%';
+  void barEl.offsetWidth;   // flush the 0% start state, otherwise the browser skips the transition and the bar snaps to full
+  barEl.style.width = '100%';
+
+  // Live percentage + stage label, driven by the same clock as the bar.
+  const pctEl = document.getElementById('splash-pct');
+  const stageEl = document.getElementById('splash-stage');
+  const STAGES = [[0,'Booting'],[30,'Loading hunter data'],[65,'Calibrating'],[90,'Ready']];
+  const startedAt = Date.now();
+  const meter = setInterval(()=>{
+    const pct = Math.min(100, Math.round((Date.now()-startedAt)/totalDuration*100));
+    pctEl.textContent = pct + '%';
+    stageEl.textContent = STAGES.filter(st=> pct >= st[0]).pop()[1];
+    if(pct >= 100) clearInterval(meter);
+  }, 120);
+
+  // A few embers drifting up behind the emblem (skipped for reduced-motion in CSS).
+  if(!splash.querySelector('.sp-mote')){
+    for(let n=0; n<14; n++){
+      const m = document.createElement('span');
+      m.className = 'sp-mote';
+      m.style.left = (6 + Math.random()*88) + '%';
+      const dur = 7 + Math.random()*7;
+      m.style.animationDuration = dur + 's';
+      m.style.animationDelay = (-Math.random()*dur) + 's';
+      m.style.opacity = '0';
+      splash.insertBefore(m, splash.firstChild);
+    }
+  }
 
   let i = 0;
   function showNext(){
@@ -4255,8 +4517,10 @@ function runSplashScreen(onDone){
     setTimeout(()=>{
       i++;
       if(i >= SPLASH_MESSAGES.length){
+        clearInterval(meter);
+        pctEl.textContent = '100%'; stageEl.textContent = 'Ready';
         splash.classList.add('fade-out');
-        setTimeout(()=>{ splash.style.display = 'none'; onDone(); }, 500);
+        setTimeout(()=>{ splash.style.display = 'none'; onDone(); }, 550);
         return;
       }
       quoteEl.classList.add('fade');
