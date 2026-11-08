@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v43';
+const CACHE_VERSION = 'v45';
 const CACHE_NAME = `the-system-${CACHE_VERSION}`;
 // Deliberately NOT versioned — this cache is meant to persist across every future
 // CACHE_VERSION bump so fonts never need re-downloading after the first load. (Previously
@@ -13,6 +13,7 @@ const ASSETS = [
   './',
   './index.html',
   './app.html',
+  './sfx.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
